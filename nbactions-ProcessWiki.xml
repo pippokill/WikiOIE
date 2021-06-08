@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<actions>
+        <action>
+            <actionName>run</actionName>
+            <packagings>
+                <packaging>jar</packaging>
+            </packagings>
+            <goals>
+                <goal>process-classes</goal>
+                <goal>org.codehaus.mojo:exec-maven-plugin:3.0.0:exec</goal>
+            </goals>
+            <properties>
+                <exec.args>${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
+                <exec.executable>java</exec.executable>
+                <exec.appArgs>-i /media/pierpaolo/fastExt4/wikidump/itwiki-20210520-ext -o /media/pierpaolo/fastExt4/wikidump/wikiout/ -t 4 -p WikiITSimpleExtractor</exec.appArgs>
+                <exec.vmArgs></exec.vmArgs>
+                <exec.mainClass>di.uniba.it.itaoie.wiki.ProcessWiki</exec.mainClass>
+            </properties>
+        </action>
+        <action>
+            <actionName>debug</actionName>
+            <packagings>
+                <packaging>jar</packaging>
+            </packagings>
+            <goals>
+                <goal>process-classes</goal>
+                <goal>org.codehaus.mojo:exec-maven-plugin:3.0.0:exec</goal>
+            </goals>
+            <properties>
+                <exec.args>${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
+                <exec.executable>java</exec.executable>
+                <jpda.listen>true</jpda.listen>
+                <exec.appArgs>-i /media/pierpaolo/fastExt4/wikidump/itwiki-20210520-ext -o /media/pierpaolo/fastExt4/wikidump/wikiout/ -t 4 -p WikiITSimpleExtractor</exec.appArgs>
+                <exec.vmArgs>-agentlib:jdwp=transport=dt_socket,server=n,address=${jpda.address}</exec.vmArgs>
+                <exec.mainClass>di.uniba.it.itaoie.wiki.ProcessWiki</exec.mainClass>
+            </properties>
+        </action>
+        <action>
+            <actionName>profile</actionName>
+            <packagings>
+                <packaging>jar</packaging>
+            </packagings>
+            <goals>
+                <goal>process-classes</goal>
+                <goal>org.codehaus.mojo:exec-maven-plugin:3.0.0:exec</goal>
+            </goals>
+            <properties>
+                <exec.args>${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
+                <exec.executable>java</exec.executable>
+                <exec.appArgs>-i /media/pierpaolo/fastExt4/wikidump/itwiki-20210520-ext -o /media/pierpaolo/fastExt4/wikidump/wikiout/ -t 4 -p WikiITSimpleExtractor</exec.appArgs>
+                <exec.vmArgs></exec.vmArgs>
+                <exec.mainClass>di.uniba.it.itaoie.wiki.ProcessWiki</exec.mainClass>
+            </properties>
+        </action>
+    </actions>
