@@ -67,6 +67,9 @@ public class WikiITSimpleExtractor implements WikiExtractor {
         if (adp_c > 1) {
             return null;
         }
+        if (list.get(offset).getUpostag().equals("ADP") || list.get(offset).getUpostag().equals("DET")) {
+            return null;
+        }
         if (noun && j < offset) {
             return getSpan(list, j + 1, offset + 1);
         } else {
@@ -106,6 +109,9 @@ public class WikiITSimpleExtractor implements WikiExtractor {
             return null;
         }
         if (list.get(j - 1).getUpostag().equals("PRON")) {
+            return null;
+        }
+        if (list.get(j - 1).getUpostag().equals("ADP") || list.get(j - 1).getUpostag().equals("DET")) {
             return null;
         }
         if (noun && j > offset) {
