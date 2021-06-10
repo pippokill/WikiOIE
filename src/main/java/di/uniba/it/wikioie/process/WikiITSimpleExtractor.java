@@ -51,7 +51,7 @@ public class WikiITSimpleExtractor implements WikiExtractor {
                     || list.get(j).getUpostag().equals("ADJ")
                     || list.get(j).getUpostag().equals("NUM")) {
                 if (!noun) {
-                    noun = list.get(j).getUpostag().equals("NOUN") || list.get(j).getUpostag().equals("PROPN");
+                    noun = list.get(j).getUpostag().equals("NOUN") || list.get(j).getUpostag().equals("PROPN") || list.get(j).getUpostag().equals("NUM");
                 }
                 if (list.get(j).getUpostag().equals("ADP")) {
                     adp_c++;
@@ -92,7 +92,7 @@ public class WikiITSimpleExtractor implements WikiExtractor {
                     || list.get(j).getUpostag().equals("PRON")
                     || list.get(j).getUpostag().equals("X")) {
                 if (!noun) {
-                    noun = list.get(j).getUpostag().equals("NOUN") || list.get(j).getUpostag().equals("PROPN");
+                    noun = list.get(j).getUpostag().equals("NOUN") || list.get(j).getUpostag().equals("PROPN") || list.get(j).getUpostag().equals("NUM");
                 }
                 if (list.get(j).getUpostag().equals("ADP")) {
                     adp_c++;

@@ -168,7 +168,7 @@ public class Triple {
      * @return
      */
     public String toSimpleString() {
-        return subject.getSpan() + "\t" + predicate.getSpan() + "\t" + object.getSpan() + "\t" + score;
+        return subject.getSpan() + "|" + predicate.getSpan() + "|" + object.getSpan() + "|" + score;
     }
 
 }

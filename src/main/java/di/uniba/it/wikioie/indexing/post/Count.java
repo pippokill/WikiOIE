@@ -25,7 +25,7 @@ import org.apache.lucene.store.FSDirectory;
  *
  * @author pierpaolo
  */
-public class PostCounter {
+public class Count {
 
     private static final String[] countFieldLabel = new String[]{"subj", "pred", "obj"};
 
@@ -76,10 +76,10 @@ public class PostCounter {
             try {
                 countPredicate(new File(args[0]));
             } catch (IOException ex) {
-                Logger.getLogger(PostCounter.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(Count.class.getName()).log(Level.SEVERE, null, ex);
             }
         } else {
-            Logger.getLogger(PostCounter.class.getName()).log(Level.SEVERE, "Not valid arguments, input directory is necessary.");
+            Logger.getLogger(Count.class.getName()).log(Level.SEVERE, "Not valid arguments, input directory is necessary.");
         }
     }
 

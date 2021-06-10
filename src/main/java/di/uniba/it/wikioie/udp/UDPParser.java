@@ -136,7 +136,7 @@ public class UDPParser {
      * @param tokens
      * @return
      */
-    public Graph<Token, String> getGraph(List<Token> tokens) {
+    public static Graph<Token, String> getGraph(List<Token> tokens) {
         Graph<Token, String> graph = new DefaultDirectedGraph(String.class);
         for (Token node : tokens) {
             graph.addVertex(node);

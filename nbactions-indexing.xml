@@ -12,7 +12,7 @@
             <properties>
                 <exec.vmArgs></exec.vmArgs>
                 <exec.args>${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
-                <exec.appArgs>-i /media/pierpaolo/fastExt4/wikidump/out/ -o /media/pierpaolo/fastExt4/wikidump/out_idx_5/ -f /media/pierpaolo/fastExt4/wikidump/out_idx/triple_idx_pred.count -m 5 -p RemoveAdpDetPassageProcessor</exec.appArgs>
+                <exec.appArgs>-i /media/pierpaolo/fastExt4/wikidump/out/ -o /media/pierpaolo/fastExt4/wikidump/out_idx_dep/ -p WikiITDepPassageProcessor</exec.appArgs>
                 <exec.mainClass>di.uniba.it.wikioie.cmd.RunIndexing</exec.mainClass>
                 <exec.executable>java</exec.executable>
             </properties>
@@ -29,7 +29,7 @@
             <properties>
                 <exec.vmArgs>-agentlib:jdwp=transport=dt_socket,server=n,address=${jpda.address}</exec.vmArgs>
                 <exec.args>${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
-                <exec.appArgs>-i /media/pierpaolo/fastExt4/wikidump/out/ -o /media/pierpaolo/fastExt4/wikidump/out_idx_5/ -f /media/pierpaolo/fastExt4/wikidump/out_idx/triple_idx_pred.count -m 5 -p RemoveAdpDetPassageProcessor</exec.appArgs>
+                <exec.appArgs>-i /media/pierpaolo/fastExt4/wikidump/out/ -o /media/pierpaolo/fastExt4/wikidump/out_idx_dep/ -p WikiITDepPassageProcessor</exec.appArgs>
                 <exec.mainClass>di.uniba.it.wikioie.cmd.RunIndexing</exec.mainClass>
                 <exec.executable>java</exec.executable>
                 <jpda.listen>true</jpda.listen>
@@ -49,7 +49,7 @@
                 <exec.args>${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
                 <exec.mainClass>di.uniba.it.wikioie.cmd.RunIndexing</exec.mainClass>
                 <exec.executable>java</exec.executable>
-                <exec.appArgs>-i /media/pierpaolo/fastExt4/wikidump/out/ -o /media/pierpaolo/fastExt4/wikidump/out_idx_5/ -f /media/pierpaolo/fastExt4/wikidump/out_idx/triple_idx_pred.count -m 5 -p RemoveAdpDetPassageProcessor</exec.appArgs>
+                <exec.appArgs>-i /media/pierpaolo/fastExt4/wikidump/out/ -o /media/pierpaolo/fastExt4/wikidump/out_idx_dep/ -p WikiITDepPassageProcessor</exec.appArgs>
             </properties>
         </action>
     </actions>
