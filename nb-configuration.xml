@@ -19,6 +19,7 @@ Any value defined here will override the pom.xml file value but is only applicab
         <configurations>
             <configuration id="ProcessWiki" profiles=""/>
             <configuration id="indexing" profiles=""/>
+            <configuration id="processing" profiles=""/>
         </configurations>
     </config-data>
 </project-shared-configuration>

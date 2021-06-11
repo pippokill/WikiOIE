@@ -11,11 +11,14 @@ import di.uniba.it.wikioie.data.Passage;
 import di.uniba.it.wikioie.data.Triple;
 import di.uniba.it.wikioie.indexing.post.PassageProcessor;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -23,6 +26,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 import org.apache.lucene.analysis.CharArraySet;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
@@ -163,6 +167,40 @@ public class WikiOIEIndex {
             docWriter.close();
             tripleWriter.close();
             LOG.log(Level.INFO, "Indexed docs {0}, indexed triples {1}", new Object[]{dc, tc});
+        }
+    }
+
+    public void process(String inputdirname, String outputdirname, PassageProcessor processor) throws IOException {
+        process(new File(inputdirname), new File(outputdirname), processor);
+    }
+
+    public void process(File inputdir, File outputdir, PassageProcessor processor) throws IOException {
+        if (inputdir.isDirectory()) {
+            File[] listFiles = inputdir.listFiles();
+            int pc = 0;
+            for (File file : listFiles) {
+                LOG.log(Level.INFO, "Processing file: {0}", file.getAbsolutePath());
+                Gson gson = new Gson();
+                BufferedReader reader;
+                if (file.getName().endsWith(".gz")) {
+                    reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(file))));
+                } else {
+                    reader = new BufferedReader(new FileReader(file));
+                }
+                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(outputdir.getAbsolutePath() + "/" + file.getName().replace(".gz", "_proc.gz")))));
+                while (reader.ready()) {
+                    String line = reader.readLine();
+                    Passage data = gson.fromJson(line, Passage.class);
+                    if (processor != null) {
+                        data = processor.process(data);
+                    }
+                    writer.append(gson.toJson(data, Passage.class));
+                    writer.newLine();
+                }
+                reader.close();
+                writer.close();
+            }
+            LOG.log(Level.INFO, "Processed passages {0}", new Object[]{pc});
         }
     }
 
