@@ -40,19 +40,21 @@ import di.uniba.it.wikioie.data.Token;
 import di.uniba.it.wikioie.data.TokenIdComparator;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.jgrapht.Graph;
 
 /**
  *
  * @author pierpaolo
  */
-public class WikiITSimpleExtractor implements WikiExtractor {
+public class WikiITSimpleDepExtractor implements WikiExtractor {
 
     /**
      *
      */
-    public WikiITSimpleExtractor() {
+    public WikiITSimpleDepExtractor() {
     }
 
     private Span getSpan(List<Token> list, int start, int end) {
@@ -149,6 +151,31 @@ public class WikiITSimpleExtractor implements WikiExtractor {
         }
     }
 
+    private boolean isLinked(Graph<Token, String> graph, List<Token> deps, List<Token> heads) {
+        Set<Token> seth = new HashSet<>(heads);
+        for (Token t : deps) {
+            Set<String> oute = graph.outgoingEdgesOf(t);
+            for (String e : oute) {
+                Token edgeTarget = graph.getEdgeTarget(e);
+                if (seth.contains(edgeTarget)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean isValidTriple(List<Token> tokens, Graph<Token, String> graph, Triple triple) {
+        List<Token> pl = tokens.subList(triple.getPredicate().getStart(), triple.getPredicate().getEnd());
+        List<Token> sl = tokens.subList(triple.getSubject().getStart(), triple.getSubject().getEnd());
+        if (!isLinked(graph, sl, pl)) {
+            return false;
+        } else {
+            List<Token> ol = tokens.subList(triple.getObject().getStart(), triple.getObject().getEnd());
+            return isLinked(graph, ol, pl);
+        }
+    }
+
     /**
      *
      * @param text
@@ -182,14 +209,20 @@ public class WikiITSimpleExtractor implements WikiExtractor {
                         Span subj = checkSubject(list, i - 1);
                         Span obj = checkObject(list, i + 3);
                         if (subj != null && obj != null) {
-                            ts.add(new Triple(subj, getSpan(list, i, i + 3), obj, subj.getScore() + obj.getScore()));
+                            Triple triple = new Triple(subj, getSpan(list, i, i + 3), obj, subj.getScore() + obj.getScore());
+                            if (isValidTriple(list, g, triple)) {
+                                ts.add(triple);
+                            }
                             i = i + 2;
                         }
                     } else {
                         Span subj = checkSubject(list, i - 1);
                         Span obj = checkObject(list, i + 2);
                         if (subj != null && obj != null) {
-                            ts.add(new Triple(subj, getSpan(list, i, i + 2), obj, subj.getScore() + obj.getScore()));
+                            Triple triple = new Triple(subj, getSpan(list, i, i + 2), obj, subj.getScore() + obj.getScore());
+                            if (isValidTriple(list, g, triple)) {
+                                ts.add(triple);
+                            }
                             i = i + 1;
                         }
                     }
@@ -198,21 +231,30 @@ public class WikiITSimpleExtractor implements WikiExtractor {
                 Span subj = checkSubject(list, i - 1);
                 Span obj = checkObject(list, i + 1);
                 if (subj != null && obj != null) {
-                    ts.add(new Triple(subj, getSpan(list, i, i + 1), obj, subj.getScore() + obj.getScore()));
+                    Triple triple = new Triple(subj, getSpan(list, i, i + 1), obj, subj.getScore() + obj.getScore());
+                    if (isValidTriple(list, g, triple)) {
+                        ts.add(triple);
+                    }
                 }
             } else if (t.getUpostag().equals("VERB")) {
                 if (i + 1 < list.size() && list.get(i + 1).getUpostag().equals("ADP")) {
                     Span subj = checkSubject(list, i - 1);
                     Span obj = checkObject(list, i + 2);
                     if (subj != null && obj != null) {
-                        ts.add(new Triple(subj, getSpan(list, i, i + 2), obj, subj.getScore() + obj.getScore()));
+                        Triple triple = new Triple(subj, getSpan(list, i, i + 2), obj, subj.getScore() + obj.getScore());
+                        if (isValidTriple(list, g, triple)) {
+                            ts.add(triple);
+                        }
                         i = i + 1;
                     }
                 } else {
                     Span subj = checkSubject(list, i - 1);
                     Span obj = checkObject(list, i + 1);
                     if (subj != null && obj != null) {
-                        ts.add(new Triple(subj, getSpan(list, i, i + 1), obj, subj.getScore() + obj.getScore()));
+                        Triple triple = new Triple(subj, getSpan(list, i, i + 1), obj, subj.getScore() + obj.getScore());
+                        if (isValidTriple(list, g, triple)) {
+                            ts.add(triple);
+                        }
                     }
                 }
             }

@@ -20,6 +20,7 @@ Any value defined here will override the pom.xml file value but is only applicab
             <configuration id="ProcessWiki" profiles=""/>
             <configuration id="indexing" profiles=""/>
             <configuration id="processing" profiles=""/>
+            <configuration id="dataset" profiles=""/>
         </configurations>
     </config-data>
 </project-shared-configuration>

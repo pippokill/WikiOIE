@@ -33,25 +33,39 @@
  *
  */
 
-package di.uniba.it.wikioie.data;
+package di.uniba.it.wikioie.indexing.post;
 
-import java.util.Comparator;
+import di.uniba.it.wikioie.data.Passage;
+import di.uniba.it.wikioie.data.Token;
+import di.uniba.it.wikioie.data.Triple;
+import di.uniba.it.wikioie.process.WikiITDepExtractor;
+import di.uniba.it.wikioie.process.WikiITSimpleDepExtractor;
+import di.uniba.it.wikioie.udp.UDPParser;
+import di.uniba.it.wikioie.udp.UDPSentence;
+import java.util.List;
+import org.jgrapht.Graph;
 
 /**
  *
  * @author pierpaolo
  */
-public class TokenIdComparator implements Comparator<Token> {
+public class WikiITSimpleDepPassageProcessor implements PassageProcessor {
 
-    /**
-     *
-     * @param o1
-     * @param o2
-     * @return
-     */
-    @Override
-    public int compare(Token o1, Token o2) {
-        return Integer.compare(o1.getId(), o2.getId());
+    private final WikiITSimpleDepExtractor wie;
+
+    public WikiITSimpleDepPassageProcessor() {
+        this.wie = new WikiITSimpleDepExtractor();
     }
-    
+
+    @Override
+    public Passage process(Passage passage) {
+        UDPSentence sentence = new UDPSentence(passage.getId(), passage.getText(), passage.getConll());
+        List<Token> tokens = UDPParser.getTokens(sentence);
+        Graph<Token, String> graph = UDPParser.getGraph(tokens);
+        List<Triple> triples = wie.extract(graph);
+        Passage r = new Passage(passage.getId(), passage.getTitle(), passage.getText(), passage.getConll(),
+                triples.toArray(new Triple[triples.size()]));
+        return r;
+    }
+
 }
