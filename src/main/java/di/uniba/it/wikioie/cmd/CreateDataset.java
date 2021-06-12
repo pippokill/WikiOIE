@@ -126,7 +126,6 @@ public class CreateDataset {
                                             } else {
                                                 csvout.printRecord(p.getTitle(), t.getScore(), t.getSubject().getSpan(), t.getPredicate().getSpan(), t.getObject().getSpan());
                                             }
-                                            csvout.println();
                                         }
                                     }
                                 }
