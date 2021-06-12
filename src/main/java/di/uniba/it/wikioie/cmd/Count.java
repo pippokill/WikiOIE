@@ -63,6 +63,8 @@ public class Count {
 
     private static final String[] countFieldLabel = new String[]{"subj", "pred", "obj"};
     
+    private static final Logger LOG = Logger.getLogger(Count.class.getName());
+    
     private static void addValue(Map<String, Counter<String>> map, String value) {
         Counter<String> c = map.get(value);
         if (c==null) {
@@ -78,7 +80,7 @@ public class Count {
      * @param outputdirname
      * @throws IOException
      */
-    public static void countPredicate(File dir, String outputdirname) throws IOException {
+    public static void count(File dir, String outputdirname) throws IOException {
         if (dir.isDirectory()) {
             Map<String, Counter<String>>[] map = new Map[countFieldLabel.length];
             for (int f = 0; f < countFieldLabel.length; f++) {
@@ -87,6 +89,7 @@ public class Count {
             File[] listFiles = dir.listFiles();
             for (File file : listFiles) {
                 if (file.isFile()) {
+                    LOG.log(Level.INFO, "Processing file: {0}", file);
                     BufferedReader reader;
                     if (file.getName().endsWith(".gz")) {
                         reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(file))));
@@ -126,7 +129,7 @@ public class Count {
     public static void main(String[] args) {
         if (args.length > 1) {
             try {
-                countPredicate(new File(args[0]), args[1]);
+                count(new File(args[0]), args[1]);
             } catch (IOException ex) {
                 Logger.getLogger(Count.class.getName()).log(Level.SEVERE, null, ex);
             }

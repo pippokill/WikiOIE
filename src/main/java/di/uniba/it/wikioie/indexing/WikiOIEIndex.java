@@ -32,7 +32,6 @@
  * GNU GENERAL PUBLIC LICENSE - Version 3, 29 June 2007
  *
  */
-
 package di.uniba.it.wikioie.indexing;
 
 import com.google.gson.Gson;
@@ -235,6 +234,7 @@ public class WikiOIEIndex {
                 while (reader.ready()) {
                     String line = reader.readLine();
                     Passage data = gson.fromJson(line, Passage.class);
+                    pc++;
                     if (processor != null) {
                         data = processor.process(data);
                     }

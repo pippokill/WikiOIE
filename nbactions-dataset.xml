@@ -12,7 +12,7 @@
             <properties>
                 <exec.vmArgs></exec.vmArgs>
                 <exec.args>${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
-                <exec.appArgs>-i /media/pierpaolo/fastExt4/wikidump/out_dep -o /media/pierpaolo/fastExt4/wikidump/dataset_dep_sample -s 0.001 -f /media/pierpaolo/fastExt4/wikidump/out_idx_dep/triple_idx_pred.count -m 40</exec.appArgs>
+                <exec.appArgs>-i /media/pierpaolo/fastExt4/wikidump/wikioie/simple/ -o /media/pierpaolo/fastExt4/wikidump/wikioie/triple_simple_text_20_01.tsv -f /media/pierpaolo/fastExt4/wikidump/wikioie/simple_count/pred.count -m 20 -s 0.01 -t</exec.appArgs>
                 <exec.mainClass>di.uniba.it.wikioie.cmd.CreateDataset</exec.mainClass>
                 <exec.executable>java</exec.executable>
             </properties>
@@ -29,7 +29,7 @@
             <properties>
                 <exec.vmArgs>-agentlib:jdwp=transport=dt_socket,server=n,address=${jpda.address}</exec.vmArgs>
                 <exec.args>${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
-                <exec.appArgs>-i /media/pierpaolo/fastExt4/wikidump/out_dep -o /media/pierpaolo/fastExt4/wikidump/dataset_dep_sample -s 0.001 -f /media/pierpaolo/fastExt4/wikidump/out_idx_dep/triple_idx_pred.count -m 40</exec.appArgs>
+                <exec.appArgs>-i /media/pierpaolo/fastExt4/wikidump/wikioie/simple/ -o /media/pierpaolo/fastExt4/wikidump/wikioie/triple_simple_text_20_01.tsv -f /media/pierpaolo/fastExt4/wikidump/wikioie/simple_count/pred.count -m 20 -s 0.01 -t</exec.appArgs>
                 <exec.mainClass>di.uniba.it.wikioie.cmd.CreateDataset</exec.mainClass>
                 <exec.executable>java</exec.executable>
                 <jpda.listen>true</jpda.listen>
@@ -49,7 +49,7 @@
                 <exec.args>${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
                 <exec.mainClass>di.uniba.it.wikioie.cmd.CreateDataset</exec.mainClass>
                 <exec.executable>java</exec.executable>
-                <exec.appArgs>-i /media/pierpaolo/fastExt4/wikidump/out_dep -o /media/pierpaolo/fastExt4/wikidump/dataset_dep_sample -s 0.001 -f /media/pierpaolo/fastExt4/wikidump/out_idx_dep/triple_idx_pred.count -m 40</exec.appArgs>
+                <exec.appArgs>-i /media/pierpaolo/fastExt4/wikidump/wikioie/simple/ -o /media/pierpaolo/fastExt4/wikidump/wikioie/triple_simple_text_20_01.tsv -f /media/pierpaolo/fastExt4/wikidump/wikioie/simple_count/pred.count -m 20 -s 0.01 -t</exec.appArgs>
             </properties>
         </action>
     </actions>

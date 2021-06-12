@@ -32,7 +32,6 @@
  * GNU GENERAL PUBLIC LICENSE - Version 3, 29 June 2007
  *
  */
-
 package di.uniba.it.wikioie.cmd;
 
 import com.google.gson.Gson;
@@ -59,6 +58,8 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 
 /**
  *
@@ -75,13 +76,14 @@ public class CreateDataset {
         Options options = new Options();
         options = options.addOption(new Option("i", true, "Input directory"))
                 .addOption(new Option("o", true, "Output file"))
-                .addOption(new Option("s", true, "Sampling"))
+                .addOption(new Option("s", true, "Sampling (optional)"))
                 .addOption(new Option("f", true, "Predicate occurrances file (optional)"))
-                .addOption(new Option("m", true, "Min predicate occurrances (optional, 5)"));
+                .addOption(new Option("m", true, "Min predicate occurrances (optional, 5)"))
+                .addOption(new Option("t", false, "Print text"));
         try {
             DefaultParser parser = new DefaultParser();
             CommandLine cmd = parser.parse(options, args);
-            if (cmd.hasOption("i") && cmd.hasOption("o") && cmd.hasOption("s")) {
+            if (cmd.hasOption("i") && cmd.hasOption("o")) {
                 Set<String> filterSet;
                 if (cmd.hasOption("f")) {
                     filterSet = Utils.loadFilterSet(new File(cmd.getOptionValue("f")), Integer.parseInt(cmd.getOptionValue("m", "5")));
@@ -89,8 +91,16 @@ public class CreateDataset {
                     filterSet = new HashSet<>();
                 }
                 BufferedWriter writer = new BufferedWriter(new FileWriter(cmd.getOptionValue("o")));
+                CSVPrinter csvout;
+                if (cmd.hasOption("t")) {
+                    csvout = CSVFormat.TDF.withHeader("title", "text", "score", "subject", "predicate", "object").print(writer);
+                } else {
+                    csvout = CSVFormat.TDF.withHeader("title", "score", "subject", "predicate", "object").print(writer);
+                }
                 Random rnd = new Random();
-                double s = Double.parseDouble(cmd.getOptionValue("s"));
+                double s = Double.parseDouble(cmd.getOptionValue("s", "1"));
+                LOG.log(Level.INFO, "Use sampling: {0}", s);
+                LOG.log(Level.INFO, "Store text: {0}", cmd.hasOption("t"));
                 File inputdir = new File(cmd.getOptionValue("i"));
                 if (inputdir.isDirectory()) {
                     File[] listFiles = inputdir.listFiles();
@@ -111,11 +121,12 @@ public class CreateDataset {
                                     if (!filterSet.contains(t.getPredicate().getSpan().toLowerCase())) {
                                         double r = rnd.nextDouble();
                                         if (r <= s) {
-                                            writer.append(p.getId()).append("\t").append(p.getTitle())
-                                                    .append("\t").append(t.getSubject().getSpan().replaceAll("\t", " "))
-                                                    .append("\t").append(t.getPredicate().getSpan().replaceAll("\t", " "))
-                                                    .append("\t").append(t.getObject().getSpan().replaceAll("\t", " "));
-                                            writer.newLine();
+                                            if (cmd.hasOption("t")) {
+                                                csvout.printRecord(p.getTitle(), p.getText(), t.getScore(), t.getSubject().getSpan(), t.getPredicate().getSpan(), t.getObject().getSpan());
+                                            } else {
+                                                csvout.printRecord(p.getTitle(), t.getScore(), t.getSubject().getSpan(), t.getPredicate().getSpan(), t.getObject().getSpan());
+                                            }
+                                            csvout.println();
                                         }
                                     }
                                 }
@@ -124,6 +135,7 @@ public class CreateDataset {
                         reader.close();
                     }
                 }
+                csvout.close();
                 writer.close();
             }
         } catch (IOException ex) {
