@@ -38,7 +38,6 @@ package di.uniba.it.wikioie.indexing.post;
 import di.uniba.it.wikioie.data.Passage;
 import di.uniba.it.wikioie.data.Token;
 import di.uniba.it.wikioie.data.Triple;
-import di.uniba.it.wikioie.process.WikiITDepExtractor;
 import di.uniba.it.wikioie.process.WikiITSimpleDepExtractor;
 import di.uniba.it.wikioie.udp.UDPParser;
 import di.uniba.it.wikioie.udp.UDPSentence;
@@ -53,10 +52,18 @@ public class WikiITSimpleDepPassageProcessor implements PassageProcessor {
 
     private final WikiITSimpleDepExtractor wie;
 
+    /**
+     *
+     */
     public WikiITSimpleDepPassageProcessor() {
         this.wie = new WikiITSimpleDepExtractor();
     }
 
+    /**
+     *
+     * @param passage
+     * @return
+     */
     @Override
     public Passage process(Passage passage) {
         UDPSentence sentence = new UDPSentence(passage.getId(), passage.getText(), passage.getConll());

@@ -37,8 +37,7 @@ package di.uniba.it.wikioie.cmd;
 
 import di.uniba.it.wikioie.data.WikiDoc;
 import di.uniba.it.wikioie.data.Config;
-import di.uniba.it.wikioie.process.WikiExtractor;
-import di.uniba.it.wikioie.process.WikiProcessThread;
+import di.uniba.it.wikioie.process.WikiUDpipeProcessThread;
 import di.uniba.it.wikioie.udp.UDPParser;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -60,16 +59,17 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 /**
- *
+ * This class processes a Wikipedia dump using UDPipe and stores the output in JSON format.
+ * 
  * @author pierpaolo
  */
-public class ProcessWiki {
+public class ProcessUDpipe {
 
     private static BlockingQueue<WikiDoc> in = new ArrayBlockingQueue(1000);
 
     private static int pc = 0;
 
-    private static final Logger LOG = Logger.getLogger(ProcessWiki.class.getName());
+    private static final Logger LOG = Logger.getLogger(ProcessUDpipe.class.getName());
 
     private static void process(File file) throws Exception {
         if (file.isDirectory()) {
@@ -121,24 +121,22 @@ public class ProcessWiki {
         Options options = new Options();
         options = options.addOption(new Option("i", true, "Input directory"))
                 .addOption(new Option("o", true, "Output directory"))
-                .addOption(new Option("p", true, "Processor"))
                 .addOption(new Option("t", true, "Number of threads (optional, default 4)"));
         try {
             DefaultParser cmdparser = new DefaultParser();
             CommandLine cmd = cmdparser.parse(options, args);
-            if (cmd.hasOption("i") && cmd.hasOption("o") && cmd.hasOption("p")) {
+            if (cmd.hasOption("i") && cmd.hasOption("o")) {
                 try {
                     int nt = Integer.parseInt(cmd.getOptionValue("t", "4"));
                     LOG.log(Level.INFO, "Threads: {0}", nt);
-                    List<WikiProcessThread> list = new ArrayList<>();
+                    List<WikiUDpipeProcessThread> list = new ArrayList<>();
                     List<BufferedWriter> buffs = new ArrayList<>();
                     LOG.log(Level.INFO, "Output dir: {0}", cmd.getOptionValue("o"));
                     for (int i = 0; i < nt; i++) {
                         UDPParser parser = new UDPParser(Config.getInstance().getValue("udp.address"), Config.getInstance().getValue("udp.model"));
                         BufferedWriter writer = new BufferedWriter(new FileWriter(cmd.getOptionValue("o") + "/wikiext_" + i));
-                        WikiExtractor ie=(WikiExtractor) ClassLoader.getSystemClassLoader().loadClass("di.uniba.it.wikioie.process."+cmd.getOptionValue("p"))
-                                .getDeclaredConstructor().newInstance();
-                        list.add(new WikiProcessThread(in, parser, ie, writer));
+                        
+                        list.add(new WikiUDpipeProcessThread(in, parser, writer));
                         buffs.add(writer);
                     }
                     for (Thread t : list) {
@@ -147,7 +145,7 @@ public class ProcessWiki {
                     LOG.log(Level.INFO, "Input dump: {0}", cmd.getOptionValue("i"));
                     process(new File(cmd.getOptionValue("o")));
                     LOG.info("Processing...");
-                    for (WikiProcessThread t : list) {
+                    for (WikiUDpipeProcessThread t : list) {
                         t.setRun(false);
                     }
                     LOG.info("Waiting for threads...");
@@ -160,14 +158,14 @@ public class ProcessWiki {
                     }
                     LOG.log(Level.INFO, "Processed: {0}", pc);
                 } catch (Exception ex) {
-                    Logger.getLogger(ProcessWiki.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(ProcessUDpipe.class.getName()).log(Level.SEVERE, null, ex);
                 }
             } else {
                 HelpFormatter formatter = new HelpFormatter();
                 formatter.printHelp("WikiOIE - Process Wikipedia", options);
             }
         } catch (ParseException ex) {
-            Logger.getLogger(ProcessWiki.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(ProcessUDpipe.class.getName()).log(Level.SEVERE, null, ex);
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp("WikiOIE - Process Wikipedia", options);
         }

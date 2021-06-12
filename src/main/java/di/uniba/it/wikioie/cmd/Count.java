@@ -32,14 +32,20 @@
  * GNU GENERAL PUBLIC LICENSE - Version 3, 29 June 2007
  *
  */
+package di.uniba.it.wikioie.cmd;
 
-package di.uniba.it.wikioie.indexing.post;
-
+import com.google.gson.Gson;
 import di.uniba.it.wikioie.data.Counter;
+import di.uniba.it.wikioie.data.Passage;
+import di.uniba.it.wikioie.data.Triple;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -47,9 +53,7 @@ import java.util.Map;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.store.FSDirectory;
+import java.util.zip.GZIPInputStream;
 
 /**
  *
@@ -58,53 +62,71 @@ import org.apache.lucene.store.FSDirectory;
 public class Count {
 
     private static final String[] countFieldLabel = new String[]{"subj", "pred", "obj"};
+    
+    private static void addValue(Map<String, Counter<String>> map, String value) {
+        Counter<String> c = map.get(value);
+        if (c==null) {
+            map.put(value, new Counter<>(value));
+        } else {
+            c.increment();
+        }
+    }
 
     /**
      *
-     * @param indexDir
+     * @param dir
+     * @param outputdirname
      * @throws IOException
      */
-    public static void countPredicate(File indexDir) throws IOException {
-        DirectoryReader reader = DirectoryReader.open(FSDirectory.open(indexDir.toPath()));
-        Map<String, Counter<String>>[] map = new Map[countFieldLabel.length];
-        for (int f = 0; f < countFieldLabel.length; f++) {
-            map[f] = new HashMap<>();
-        }
-        for (int i = 0; i < reader.maxDoc(); i++) {
-            Document document = reader.document(i);
-            if (document != null) {
-                for (int f = 0; f < countFieldLabel.length; f++) {
-                    String k = document.get(countFieldLabel[f]).toLowerCase();
-                    Counter<String> c = map[f].get(k);
-                    if (c == null) {
-                        map[f].put(k, new Counter<>(k));
+    public static void countPredicate(File dir, String outputdirname) throws IOException {
+        if (dir.isDirectory()) {
+            Map<String, Counter<String>>[] map = new Map[countFieldLabel.length];
+            for (int f = 0; f < countFieldLabel.length; f++) {
+                map[f] = new HashMap<>();
+            }
+            File[] listFiles = dir.listFiles();
+            for (File file : listFiles) {
+                if (file.isFile()) {
+                    BufferedReader reader;
+                    if (file.getName().endsWith(".gz")) {
+                        reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(file))));
                     } else {
-                        c.increment();
+                        reader = new BufferedReader(new FileReader(file));
                     }
+                    Gson gson = new Gson();
+                    while (reader.ready()) {
+                        Passage passage = gson.fromJson(reader.readLine(), Passage.class);
+                        for (Triple triple : passage.getTriples()) {
+                            addValue(map[0], triple.getSubject().getSpan().toLowerCase());
+                            addValue(map[1], triple.getPredicate().getSpan().toLowerCase());
+                            addValue(map[2], triple.getObject().getSpan().toLowerCase());
+                        }
+                    }
+                    reader.close();
                 }
             }
-        }
-        reader.close();
-        for (int f = 0; f < countFieldLabel.length; f++) {
-            List<Counter<String>> l = new ArrayList<>();
-            l.addAll(map[f].values());
-            Collections.sort(l, Collections.reverseOrder());
-            BufferedWriter writer = new BufferedWriter(new FileWriter(indexDir.getParent() + "/" + indexDir.getName() + "_" + countFieldLabel[f] + ".count"));
-            for (Counter<String> c : l) {
-                writer.append(c.getItem()).append("\t").append(String.valueOf(c.getCount()));
-                writer.newLine();
+            for (int f = 0; f < countFieldLabel.length; f++) {
+                List<Counter<String>> l = new ArrayList<>();
+                l.addAll(map[f].values());
+                Collections.sort(l, Collections.reverseOrder());
+                BufferedWriter writer = new BufferedWriter(new FileWriter(outputdirname + "/" + countFieldLabel[f] + ".count"));
+                for (Counter<String> c : l) {
+                    writer.append(c.getItem()).append("\t").append(String.valueOf(c.getCount()));
+                    writer.newLine();
+                }
+                writer.close();
             }
-            writer.close();
         }
+
     }
 
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        if (args.length > 0) {
+        if (args.length > 1) {
             try {
-                countPredicate(new File(args[0]));
+                countPredicate(new File(args[0]), args[1]);
             } catch (IOException ex) {
                 Logger.getLogger(Count.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -112,5 +134,7 @@ public class Count {
             Logger.getLogger(Count.class.getName()).log(Level.SEVERE, "Not valid arguments, input directory is necessary.");
         }
     }
+
+    
 
 }

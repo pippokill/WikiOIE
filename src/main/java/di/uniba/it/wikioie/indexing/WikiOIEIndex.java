@@ -200,10 +200,24 @@ public class WikiOIEIndex {
         }
     }
 
+    /**
+     *
+     * @param inputdirname
+     * @param outputdirname
+     * @param processor
+     * @throws IOException
+     */
     public void process(String inputdirname, String outputdirname, PassageProcessor processor) throws IOException {
         process(new File(inputdirname), new File(outputdirname), processor);
     }
 
+    /**
+     *
+     * @param inputdir
+     * @param outputdir
+     * @param processor
+     * @throws IOException
+     */
     public void process(File inputdir, File outputdir, PassageProcessor processor) throws IOException {
         if (inputdir.isDirectory()) {
             File[] listFiles = inputdir.listFiles();
@@ -224,6 +238,7 @@ public class WikiOIEIndex {
                     if (processor != null) {
                         data = processor.process(data);
                     }
+                    data.setConll(null);
                     writer.append(gson.toJson(data, Passage.class));
                     writer.newLine();
                 }

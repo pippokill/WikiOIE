@@ -32,17 +32,12 @@
  * GNU GENERAL PUBLIC LICENSE - Version 3, 29 June 2007
  *
  */
-
 package di.uniba.it.wikioie.cmd;
 
-import di.uniba.it.wikioie.Utils;
 import di.uniba.it.wikioie.indexing.WikiOIEIndex;
 import di.uniba.it.wikioie.indexing.post.PassageProcessor;
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.cli.CommandLine;
@@ -53,10 +48,12 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 /**
- *
+ * This class processes a JSON dump of Wikipedia with UDPipe annotations and extracts triples using a WikiExtractor class.
+ * The output is stored in JSON format.
+ * 
  * @author pierpaolo
  */
-public class RunIndexing {
+public class Process {
 
     /**
      * @param args the command line arguments
@@ -65,35 +62,26 @@ public class RunIndexing {
         Options options = new Options();
         options = options.addOption(new Option("i", true, "Input directory"))
                 .addOption(new Option("o", true, "Output directory"))
-                .addOption(new Option("f", true, "Filter file, (optional)"))
-                .addOption(new Option("m", true, "Min occurrances (optional, default 5)"))
-                .addOption(new Option("p", true, "Post processing class (optional)"));
+                .addOption(new Option("p", true, "Post processing class"));
         try {
             DefaultParser parser = new DefaultParser();
             CommandLine cmd = parser.parse(options, args);
-            if (cmd.hasOption("i") && cmd.hasOption("o")) {
+            if (cmd.hasOption("i") && cmd.hasOption("o") && cmd.hasOption("p")) {
                 WikiOIEIndex idx = new WikiOIEIndex();
                 PassageProcessor processor = null;
-                if (cmd.hasOption("p")) {
-                    try {
-                        processor = (PassageProcessor) ClassLoader.getSystemClassLoader().loadClass("di.uniba.it.wikioie.indexing.post." + cmd.getOptionValue("p")).getDeclaredConstructor().newInstance();
-                    } catch (ClassNotFoundException | NoSuchMethodException ex) {
-                        Logger.getLogger(RunIndexing.class.getName()).log(Level.SEVERE, "Not valid processor, use null", ex);
-                    } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-                        Logger.getLogger(RunIndexing.class.getName()).log(Level.SEVERE, null, ex);
-                    }
+                try {
+                    processor = (PassageProcessor) ClassLoader.getSystemClassLoader().loadClass("di.uniba.it.wikioie.indexing.post." + cmd.getOptionValue("p")).getDeclaredConstructor().newInstance();
+                } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+                    Logger.getLogger(Process.class.getName()).log(Level.SEVERE, "Not valid processor", ex);
+                    System.exit(1);
                 }
-                Set<String> filter = new HashSet<>();
-                if (cmd.hasOption("f")) {
-                    filter = Utils.loadFilterSet(new File(cmd.getOptionValue("f")), Integer.parseInt(cmd.getOptionValue("m", "5")));
-                }
-                idx.index(cmd.getOptionValue("i"), cmd.getOptionValue("o"), filter, processor);
+                idx.process(cmd.getOptionValue("i"), cmd.getOptionValue("o"), processor);
             } else {
                 HelpFormatter formatter = new HelpFormatter();
                 formatter.printHelp("WikiOIE - Run indexing", options);
             }
         } catch (IOException ex) {
-            Logger.getLogger(RunIndexing.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Process.class.getName()).log(Level.SEVERE, null, ex);
         } catch (ParseException ex) {
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp("WikiOIE Run indexing", options);

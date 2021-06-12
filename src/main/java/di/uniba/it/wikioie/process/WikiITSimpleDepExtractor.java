@@ -74,6 +74,9 @@ public class WikiITSimpleDepExtractor implements WikiExtractor {
     }
 
     private Span checkSubject(List<Token> list, int offset) {
+        if (offset < 0) {
+            return null;
+        }
         int j = offset;
         boolean noun = false;
         int adp_c = 0;
@@ -113,6 +116,9 @@ public class WikiITSimpleDepExtractor implements WikiExtractor {
     }
 
     private Span checkObject(List<Token> list, int offset) {
+        if (offset >= list.size()) {
+            return null;
+        }
         int j = offset;
         boolean noun = false;
         int adp_c = 0;

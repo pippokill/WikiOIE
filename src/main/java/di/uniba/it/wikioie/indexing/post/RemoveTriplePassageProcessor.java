@@ -32,51 +32,33 @@
  * GNU GENERAL PUBLIC LICENSE - Version 3, 29 June 2007
  *
  */
+package di.uniba.it.wikioie.indexing.post;
 
-package di.uniba.it.wikioie.test;
-
-import di.uniba.it.wikioie.Utils;
-import di.uniba.it.wikioie.data.Config;
-import di.uniba.it.wikioie.data.Token;
+import di.uniba.it.wikioie.data.Passage;
 import di.uniba.it.wikioie.data.Triple;
-import di.uniba.it.wikioie.process.WikiExtractor;
-import di.uniba.it.wikioie.process.WikiITSimpleDepExtractor;
-import di.uniba.it.wikioie.process.WikiITSimpleExtractor;
-import di.uniba.it.wikioie.udp.UDPParser;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.jgrapht.Graph;
 
 /**
  *
  * @author pierpaolo
  */
-public class TestDepExtractor {
+public class RemoveTriplePassageProcessor implements PassageProcessor {
 
     /**
-     * @param args the command line arguments
+     *
      */
-    public static void main(String[] args) {
-        try {
-            //String text = Utils.readText("resources/test_01.txt");
-            String text = "Prende il nome dall'oceanografo norvegese Bjørn Helland-Hansen, che pubblicò insieme a Fridtjof Nansen una monografia sull'interazione tra correnti marine e condizioni climatiche al largo delle coste norvegesi.";
-            UDPParser parser = new UDPParser(Config.getInstance().getValue("udp.address"), Config.getInstance().getValue("udp.model"));
-            List<Graph<Token, String>> ud = parser.parse(text);
-            WikiExtractor wie = new WikiITSimpleExtractor();
-            List<Triple> ts = wie.extract(ud);
-            for (Triple t : ts) {
-                System.out.println(t.toSimpleString());
-            }
-            System.out.println("*** ================= ***");
-            wie = new WikiITSimpleDepExtractor();
-            ts = wie.extract(ud);
-            for (Triple t : ts) {
-                System.out.println(t.toSimpleString());
-            }
-        } catch (Exception ex) {
-            Logger.getLogger(TestDepExtractor.class.getName()).log(Level.SEVERE, null, ex);
-        }
+    public RemoveTriplePassageProcessor() {
+    }
+
+    /**
+     *
+     * @param passage
+     * @return
+     */
+    @Override
+    public Passage process(Passage passage) {
+        Passage r = new Passage(passage.getId(), passage.getTitle(), passage.getText(), passage.getConll(),
+                new Triple[0]);
+        return r;
     }
 
 }

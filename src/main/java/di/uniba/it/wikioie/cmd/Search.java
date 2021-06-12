@@ -38,7 +38,6 @@ package di.uniba.it.wikioie.cmd;
 import di.uniba.it.wikioie.indexing.SearchDoc;
 import di.uniba.it.wikioie.indexing.SearchTriple;
 import di.uniba.it.wikioie.indexing.WikiOIEIndex;
-import di.uniba.it.wikioie.indexing.post.Count;
 import java.io.IOException;
 import java.util.List;
 import java.util.Scanner;
@@ -50,7 +49,7 @@ import org.apache.lucene.queryparser.classic.ParseException;
  *
  * @author pierpaolo
  */
-public class RunSearch {
+public class Search {
 
     /**
      * @param args the command line arguments
@@ -93,7 +92,7 @@ public class RunSearch {
                 Logger.getLogger(Count.class.getName()).log(Level.SEVERE, "Not valid arguments, input directory is necessary.");
             }
         } catch (IOException | ParseException ex) {
-            Logger.getLogger(RunSearch.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Search.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
