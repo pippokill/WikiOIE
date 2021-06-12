@@ -62,7 +62,7 @@ public class Process {
         Options options = new Options();
         options = options.addOption(new Option("i", true, "Input directory"))
                 .addOption(new Option("o", true, "Output directory"))
-                .addOption(new Option("p", true, "Post processing class"));
+                .addOption(new Option("p", true, "Processing class"));
         try {
             DefaultParser parser = new DefaultParser();
             CommandLine cmd = parser.parse(options, args);
@@ -78,7 +78,7 @@ public class Process {
                 idx.process(cmd.getOptionValue("i"), cmd.getOptionValue("o"), processor);
             } else {
                 HelpFormatter formatter = new HelpFormatter();
-                formatter.printHelp("WikiOIE - Run indexing", options);
+                formatter.printHelp("WikiOIE - Run processing", options);
             }
         } catch (IOException ex) {
             Logger.getLogger(Process.class.getName()).log(Level.SEVERE, null, ex);

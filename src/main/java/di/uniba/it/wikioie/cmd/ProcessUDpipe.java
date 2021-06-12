@@ -162,7 +162,7 @@ public class ProcessUDpipe {
                 }
             } else {
                 HelpFormatter formatter = new HelpFormatter();
-                formatter.printHelp("WikiOIE - Process Wikipedia", options);
+                formatter.printHelp("WikiOIE - Process Wikipedia using UDpipe", options);
             }
         } catch (ParseException ex) {
             Logger.getLogger(ProcessUDpipe.class.getName()).log(Level.SEVERE, null, ex);
