@@ -48,9 +48,10 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 /**
- * This class processes a JSON dump of Wikipedia with UDPipe annotations and extracts triples using a WikiExtractor class.
- * The output is stored in JSON format.
- * 
+ * This class processes a JSON dump of Wikipedia with UDPipe annotations and
+ * extracts triples using a WikiExtractor class. The output is stored in JSON
+ * format.
+ *
  * @author pierpaolo
  */
 public class Process {
@@ -70,6 +71,7 @@ public class Process {
                 WikiOIEIndex idx = new WikiOIEIndex();
                 PassageProcessor processor = null;
                 try {
+                    Logger.getLogger(Process.class.getName()).log(Level.INFO, "Loading {0}...", cmd.getOptionValue("p"));
                     processor = (PassageProcessor) ClassLoader.getSystemClassLoader().loadClass("di.uniba.it.wikioie.indexing.post." + cmd.getOptionValue("p")).getDeclaredConstructor().newInstance();
                 } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
                     Logger.getLogger(Process.class.getName()).log(Level.SEVERE, "Not valid processor", ex);
