@@ -12,7 +12,7 @@
             <properties>
                 <exec.vmArgs></exec.vmArgs>
                 <exec.args>${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
-                <exec.appArgs>-i /media/pierpaolo/fastExt4/wikidump/wikioie/simpledep/ -o /media/pierpaolo/fastExt4/wikidump/wikioie/simpledep_idx/ -f /media/pierpaolo/fastExt4/wikidump/wikioie/simpledep_count/pred.count -m 5</exec.appArgs>
+                <exec.appArgs>-i /media/pierpaolo/fastExt4/wikidump/wikioie/udpipe/ -o /media/pierpaolo/fastExt4/wikidump/wikioie/simpledep_sup_idx/ -f /media/pierpaolo/fastExt4/wikidump/wikioie/simpledep_count/pred.count -m 5 -p WikiITSimpleDepSupervisedPassageProcessor -t resources/bootstrapping/simpledep/tr_9</exec.appArgs>
                 <exec.mainClass>di.uniba.it.wikioie.cmd.Indexing</exec.mainClass>
                 <exec.executable>java</exec.executable>
             </properties>
@@ -29,7 +29,7 @@
             <properties>
                 <exec.vmArgs>-agentlib:jdwp=transport=dt_socket,server=n,address=${jpda.address}</exec.vmArgs>
                 <exec.args>${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
-                <exec.appArgs>-i /media/pierpaolo/fastExt4/wikidump/wikioie/simpledep/ -o /media/pierpaolo/fastExt4/wikidump/wikioie/simpledep_idx/ -f /media/pierpaolo/fastExt4/wikidump/wikioie/simpledep_count/pred.count -m 5</exec.appArgs>
+                <exec.appArgs>-i /media/pierpaolo/fastExt4/wikidump/wikioie/udpipe/ -o /media/pierpaolo/fastExt4/wikidump/wikioie/simpledep_sup_idx/ -f /media/pierpaolo/fastExt4/wikidump/wikioie/simpledep_count/pred.count -m 5 -p WikiITSimpleDepSupervisedPassageProcessor -t resources/bootstrapping/simpledep/tr_9</exec.appArgs>
                 <exec.mainClass>di.uniba.it.wikioie.cmd.Indexing</exec.mainClass>
                 <exec.executable>java</exec.executable>
                 <jpda.listen>true</jpda.listen>
@@ -49,7 +49,7 @@
                 <exec.args>${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
                 <exec.mainClass>di.uniba.it.wikioie.cmd.Indexing</exec.mainClass>
                 <exec.executable>java</exec.executable>
-                <exec.appArgs>-i /media/pierpaolo/fastExt4/wikidump/wikioie/simpledep/ -o /media/pierpaolo/fastExt4/wikidump/wikioie/simpledep_idx/ -f /media/pierpaolo/fastExt4/wikidump/wikioie/simpledep_count/pred.count -m 5</exec.appArgs>
+                <exec.appArgs>-i /media/pierpaolo/fastExt4/wikidump/wikioie/udpipe/ -o /media/pierpaolo/fastExt4/wikidump/wikioie/simpledep_sup_idx/ -f /media/pierpaolo/fastExt4/wikidump/wikioie/simpledep_count/pred.count -m 5 -p WikiITSimpleDepSupervisedPassageProcessor -t resources/bootstrapping/simpledep/tr_9</exec.appArgs>
             </properties>
         </action>
     </actions>

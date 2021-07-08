@@ -32,20 +32,38 @@
  * GNU GENERAL PUBLIC LICENSE - Version 3, 29 June 2007
  *
  */
-
 package di.uniba.it.wikioie;
 
+import di.uniba.it.wikioie.data.Pair;
+import di.uniba.it.wikioie.data.Span;
+import di.uniba.it.wikioie.data.Token;
+import di.uniba.it.wikioie.data.Triple;
+import di.uniba.it.wikioie.training.CoTraining;
+import di.uniba.it.wikioie.training.FileInstance;
+import di.uniba.it.wikioie.training.Instance;
+import di.uniba.it.wikioie.training.TrainingSet;
+import di.uniba.it.wikioie.udp.UDPSentence;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVRecord;
+import org.jgrapht.Graph;
 
 /**
  *
@@ -111,6 +129,101 @@ public class Utils {
         reader.close();
         LOG.log(Level.INFO, "Filtered {0} items from {1}", new Object[]{set.size(), file.getName()});
         return set;
+    }
+
+    public static Pair<String, Set<String>> getPosFeature(UDPSentence sentence, Span span) {
+        Set<String> set = new HashSet<>();
+        StringBuilder sb = new StringBuilder();
+        for (int i = span.getStart(); i < span.getEnd(); i++) {
+            sb.append("_").append(sentence.getTokens().get(i).getUpostag());
+            set.add(sentence.getTokens().get(i).getUpostag());
+        }
+        return new Pair(sb.toString(), set);
+    }
+
+    public static Set<String> getDependencies(UDPSentence sentence, Span dep, Span head) {
+        Set<String> set = new HashSet<>();
+        Graph<Token, String> graph = sentence.getGraph();
+        for (int i = dep.getStart(); i < dep.getEnd(); i++) {
+            Set<String> edges = graph.outgoingEdgesOf(sentence.getTokens().get(i));
+            for (String edge : edges) {
+                Token target = graph.getEdgeTarget(edge);
+                if (target.getId() >= head.getStart() && target.getId() < head.getEnd()) {
+                    set.add("PD_" + target.getDepRel());
+                }
+            }
+        }
+        return set;
+    }
+
+    public static void copyByLine(File inputfile, File outfile) throws IOException {
+        BufferedReader in = new BufferedReader(new FileReader(inputfile));
+        BufferedWriter out = new BufferedWriter(new FileWriter(outfile));
+        while (in.ready()) {
+            out.write(in.readLine());
+            out.newLine();
+        }
+        in.close();
+        out.close();
+    }
+
+    public static void saveDict(Map<String, Integer> dict, File outputfile) throws IOException {
+        BufferedWriter writer = new BufferedWriter(new FileWriter(outputfile));
+        for (String key : dict.keySet()) {
+            writer.append(key).append("\t").append(dict.get(key).toString());
+            writer.newLine();
+        }
+        writer.close();
+    }
+
+    public static void removeDuplicate(File bootfile, File datafile, File outfile) throws IOException {
+        Reader in = new FileReader(bootfile);
+        Iterable<CSVRecord> records = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(in);
+        Map<String, List<FileInstance>> bootins = new HashMap<>();
+        for (CSVRecord record : records) {
+            String title = record.get("title");
+            List<FileInstance> l = bootins.get(title);
+            if (l == null) {
+                l = new ArrayList<>();
+                bootins.put(title, l);
+            }
+            FileInstance inst = new FileInstance(record.get("text"), record.get("subject"), record.get("predicate"), record.get("object"));
+            l.add(inst);
+        }
+        in.close();
+
+        Set<Integer> ids = new HashSet<>();
+        in = new FileReader(datafile);
+        records = CSVFormat.TDF.withFirstRecordAsHeader().parse(in);
+        int r = 1; // first line is the header!!!
+        for (CSVRecord record : records) {
+            List<FileInstance> l = bootins.get(record.get("title"));
+            if (l != null) {
+                for (FileInstance inst : l) {
+                    if (inst.getText().equals(record.get("text")) && inst.getSubject().equals(record.get("subject")) && inst.getPredicate().equals(record.get("predicate")) && inst.getObject().equals(record.get("object"))) {
+                        ids.add(r);
+                        System.out.println("Duplicate at: " + r);
+                        break;
+                    }
+                }
+            }
+            r++;
+        }
+        in.close();
+
+        BufferedWriter writer = new BufferedWriter(new FileWriter(outfile));
+        in = new FileReader(datafile);
+        BufferedReader reader = new BufferedReader(in);
+        r = 0;
+        while (reader.ready()) {
+            String line=reader.readLine();
+            if (!ids.contains(r)) {
+                writer.write(line);
+                writer.newLine();
+            }
+        }
+        reader.close();
+        writer.close();
     }
 
 }

@@ -32,7 +32,6 @@
  * GNU GENERAL PUBLIC LICENSE - Version 3, 29 June 2007
  *
  */
-
 package di.uniba.it.wikioie.cmd;
 
 import di.uniba.it.wikioie.Utils;
@@ -54,7 +53,7 @@ import org.apache.commons.cli.ParseException;
 
 /**
  * This class indexes a JSON dump with triples.
- * 
+ *
  * @author pierpaolo
  */
 public class Indexing {
@@ -68,7 +67,8 @@ public class Indexing {
                 .addOption(new Option("o", true, "Output directory"))
                 .addOption(new Option("f", true, "Filter file, (optional)"))
                 .addOption(new Option("m", true, "Min occurrances (optional, default 5)"))
-                .addOption(new Option("p", true, "Post processing class (optional)"));
+                .addOption(new Option("p", true, "Post processing class (optional)"))
+                .addOption(new Option("t", true, "Training file (optional)"));
         try {
             DefaultParser parser = new DefaultParser();
             CommandLine cmd = parser.parse(options, args);
@@ -77,7 +77,11 @@ public class Indexing {
                 PassageProcessor processor = null;
                 if (cmd.hasOption("p")) {
                     try {
-                        processor = (PassageProcessor) ClassLoader.getSystemClassLoader().loadClass("di.uniba.it.wikioie.indexing.post." + cmd.getOptionValue("p")).getDeclaredConstructor().newInstance();
+                        if (cmd.hasOption("t")) {
+                            processor = (PassageProcessor) ClassLoader.getSystemClassLoader().loadClass("di.uniba.it.wikioie.indexing.post." + cmd.getOptionValue("p")).getDeclaredConstructor(File.class).newInstance(new File(cmd.getOptionValue("t")));
+                        } else {
+                            processor = (PassageProcessor) ClassLoader.getSystemClassLoader().loadClass("di.uniba.it.wikioie.indexing.post." + cmd.getOptionValue("p")).getDeclaredConstructor().newInstance();
+                        }
                     } catch (ClassNotFoundException | NoSuchMethodException ex) {
                         Logger.getLogger(Indexing.class.getName()).log(Level.SEVERE, "Not valid processor, use null", ex);
                     } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
