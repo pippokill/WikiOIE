@@ -36,6 +36,7 @@ package di.uniba.it.wikioie.cmd;
 
 import di.uniba.it.wikioie.indexing.WikiOIEIndex;
 import di.uniba.it.wikioie.indexing.post.PassageProcessor;
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.logging.Level;
@@ -63,7 +64,8 @@ public class Process {
         Options options = new Options();
         options = options.addOption(new Option("i", true, "Input directory"))
                 .addOption(new Option("o", true, "Output directory"))
-                .addOption(new Option("p", true, "Processing class"));
+                .addOption(new Option("p", true, "Processing class"))
+                .addOption(new Option("t", true, "Training file (optional)"));
         try {
             DefaultParser parser = new DefaultParser();
             CommandLine cmd = parser.parse(options, args);
@@ -71,10 +73,13 @@ public class Process {
                 WikiOIEIndex idx = new WikiOIEIndex();
                 PassageProcessor processor = null;
                 try {
-                    Logger.getLogger(Process.class.getName()).log(Level.INFO, "Loading {0}...", cmd.getOptionValue("p"));
-                    processor = (PassageProcessor) ClassLoader.getSystemClassLoader().loadClass("di.uniba.it.wikioie.indexing.post." + cmd.getOptionValue("p")).getDeclaredConstructor().newInstance();
+                    if (cmd.hasOption("t")) {
+                        processor = (PassageProcessor) ClassLoader.getSystemClassLoader().loadClass("di.uniba.it.wikioie.indexing.post." + cmd.getOptionValue("p")).getDeclaredConstructor(File.class).newInstance(new File(cmd.getOptionValue("t")));
+                    } else {
+                        processor = (PassageProcessor) ClassLoader.getSystemClassLoader().loadClass("di.uniba.it.wikioie.indexing.post." + cmd.getOptionValue("p")).getDeclaredConstructor().newInstance();
+                    }
                 } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-                    Logger.getLogger(Process.class.getName()).log(Level.SEVERE, "Not valid processor", ex);
+                    Logger.getLogger(Indexing.class.getName()).log(Level.SEVERE, "Not valid processor...exit", ex);
                     System.exit(1);
                 }
                 idx.process(cmd.getOptionValue("i"), cmd.getOptionValue("o"), processor);

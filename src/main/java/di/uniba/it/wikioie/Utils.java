@@ -216,7 +216,7 @@ public class Utils {
         BufferedReader reader = new BufferedReader(in);
         r = 0;
         while (reader.ready()) {
-            String line=reader.readLine();
+            String line = reader.readLine();
             if (!ids.contains(r)) {
                 writer.write(line);
                 writer.newLine();
@@ -224,6 +224,35 @@ public class Utils {
         }
         reader.close();
         writer.close();
+    }
+
+    public static boolean invertTriple(UDPSentence sentence, Triple triple) {
+        boolean subjIsObj = false;
+        boolean subjIsSubj = false;
+        for (int i = triple.getSubject().getStart(); i < triple.getSubject().getEnd(); i++) {
+            if (sentence.getTokens().get(i).getDepRel().contains("obj")) {
+                subjIsObj = true;
+            } else if (sentence.getTokens().get(i).getDepRel().contains("subj")) {
+                subjIsSubj = true;
+            }
+        }
+        boolean objIsSubj = false;
+        boolean objIsObj = false;
+        for (int i = triple.getObject().getStart(); i < triple.getObject().getEnd(); i++) {
+            if (sentence.getTokens().get(i).getDepRel().contains("subj")) {
+                objIsSubj = true;
+            } else if (sentence.getTokens().get(i).getDepRel().contains("obj")) {
+                objIsObj = true;
+            }
+        }
+        if ((subjIsObj && !subjIsSubj) && (objIsSubj && !objIsObj)) {
+            Span a = triple.getSubject();
+            triple.setSubject(triple.getObject());
+            triple.setObject(a);
+            return true;
+        } else {
+            return false;
+        }
     }
 
 }

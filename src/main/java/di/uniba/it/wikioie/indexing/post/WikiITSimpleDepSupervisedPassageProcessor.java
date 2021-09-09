@@ -38,6 +38,7 @@ import de.bwaldvogel.liblinear.Feature;
 import de.bwaldvogel.liblinear.FeatureNode;
 import de.bwaldvogel.liblinear.Linear;
 import de.bwaldvogel.liblinear.Model;
+import di.uniba.it.wikioie.Utils;
 import di.uniba.it.wikioie.data.Config;
 import di.uniba.it.wikioie.data.Pair;
 import di.uniba.it.wikioie.data.Passage;
@@ -129,6 +130,11 @@ public class WikiITSimpleDepSupervisedPassageProcessor implements PassageProcess
                     triples.remove(i);
                 }
             }
+            // CHECK THIS!
+            for (Triple t:triples) {
+                Utils.invertTriple(sentence, t);
+            }
+            // ==============
             Passage r = new Passage(passage.getId(), passage.getTitle(), passage.getText(), passage.getConll(),
                     triples.toArray(new Triple[triples.size()]));
             return r;

@@ -14,7 +14,7 @@
                 <exec.executable>java</exec.executable>
                 <exec.mainClass>di.uniba.it.wikioie.cmd.ShuffleCatDataset</exec.mainClass>
                 <exec.vmArgs></exec.vmArgs>
-                <exec.appArgs>/media/pierpaolo/fastExt4/wikidump/wikioie/triple_simple_text_20_01.tsv /media/pierpaolo/fastExt4/wikidump/wikioie/triple_simple_text_20_01_500.tsv 500</exec.appArgs>
+                <exec.appArgs>/media/pierpaolo/fastExt4/wikidump/wikioie/simpledep_sup_text_20_01.tsv /media/pierpaolo/fastExt4/wikidump/wikioie/simpledep_sup_text_20_01_500.tsv 500</exec.appArgs>
             </properties>
         </action>
         <action>
@@ -32,7 +32,7 @@
                 <jpda.listen>true</jpda.listen>
                 <exec.mainClass>di.uniba.it.wikioie.cmd.ShuffleCatDataset</exec.mainClass>
                 <exec.vmArgs>-agentlib:jdwp=transport=dt_socket,server=n,address=${jpda.address}</exec.vmArgs>
-                <exec.appArgs>/media/pierpaolo/fastExt4/wikidump/wikioie/triple_simple_text_20_01.tsv /media/pierpaolo/fastExt4/wikidump/wikioie/triple_simple_text_20_01_500.tsv 500</exec.appArgs>
+                <exec.appArgs>/media/pierpaolo/fastExt4/wikidump/wikioie/simpledep_sup_text_20_01.tsv /media/pierpaolo/fastExt4/wikidump/wikioie/simpledep_sup_text_20_01_500.tsv 500</exec.appArgs>
             </properties>
         </action>
         <action>
@@ -49,7 +49,7 @@
                 <exec.executable>java</exec.executable>
                 <exec.mainClass>di.uniba.it.wikioie.cmd.ShuffleCatDataset</exec.mainClass>
                 <exec.vmArgs></exec.vmArgs>
-                <exec.appArgs>/media/pierpaolo/fastExt4/wikidump/wikioie/triple_simple_text_20_01.tsv /media/pierpaolo/fastExt4/wikidump/wikioie/triple_simple_text_20_01_500.tsv 500</exec.appArgs>
+                <exec.appArgs>/media/pierpaolo/fastExt4/wikidump/wikioie/simpledep_sup_text_20_01.tsv /media/pierpaolo/fastExt4/wikidump/wikioie/simpledep_sup_text_20_01_500.tsv 500</exec.appArgs>
             </properties>
         </action>
     </actions>
