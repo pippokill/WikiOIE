@@ -143,7 +143,7 @@ public class ProcessUDpipe {
                         t.start();
                     }
                     LOG.log(Level.INFO, "Input dump: {0}", cmd.getOptionValue("i"));
-                    process(new File(cmd.getOptionValue("o")));
+                    process(new File(cmd.getOptionValue("i")));
                     LOG.info("Processing...");
                     for (WikiUDpipeProcessThread t : list) {
                         t.setRun(false);

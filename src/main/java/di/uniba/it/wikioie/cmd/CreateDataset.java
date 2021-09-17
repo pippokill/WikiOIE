@@ -35,6 +35,7 @@
 package di.uniba.it.wikioie.cmd;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import di.uniba.it.wikioie.Utils;
 import di.uniba.it.wikioie.data.Passage;
 import di.uniba.it.wikioie.data.Triple;
@@ -115,20 +116,25 @@ public class CreateDataset {
                         }
                         while (reader.ready()) {
                             String line = reader.readLine();
-                            Passage p = gson.fromJson(line, Passage.class);
-                            for (Triple t : p.getTriples()) {
-                                if (t.getSubject().getSpan().length() > 0 && t.getPredicate().getSpan().length() > 0 && t.getObject().getSpan().length() > 0) {
-                                    if (!filterSet.contains(t.getPredicate().getSpan().toLowerCase())) {
-                                        double r = rnd.nextDouble();
-                                        if (r <= s) {
-                                            if (cmd.hasOption("t")) {
-                                                csvout.printRecord(p.getTitle(), p.getText(), t.getScore(), t.getSubject().getSpan(), t.getPredicate().getSpan(), t.getObject().getSpan());
-                                            } else {
-                                                csvout.printRecord(p.getTitle(), t.getScore(), t.getSubject().getSpan(), t.getPredicate().getSpan(), t.getObject().getSpan());
+                            Passage p;
+                            try {
+                                p = gson.fromJson(line, Passage.class);
+                                for (Triple t : p.getTriples()) {
+                                    if (t.getSubject().getSpan().length() > 0 && t.getPredicate().getSpan().length() > 0 && t.getObject().getSpan().length() > 0) {
+                                        if (!filterSet.contains(t.getPredicate().getSpan().toLowerCase())) {
+                                            double r = rnd.nextDouble();
+                                            if (r <= s) {
+                                                if (cmd.hasOption("t")) {
+                                                    csvout.printRecord(p.getTitle(), p.getText(), t.getScore(), t.getSubject().getSpan(), t.getPredicate().getSpan(), t.getObject().getSpan());
+                                                } else {
+                                                    csvout.printRecord(p.getTitle(), t.getScore(), t.getSubject().getSpan(), t.getPredicate().getSpan(), t.getObject().getSpan());
+                                                }
                                             }
                                         }
                                     }
                                 }
+                            } catch (JsonSyntaxException | IOException ex) {
+                                LOG.log(Level.WARNING, "I/O exception", ex);
                             }
                         }
                         reader.close();
