@@ -149,7 +149,7 @@ public class ProcessUDpipe {
                     LOG.info("Waiting for queue...");
                     while (!in.isEmpty()) {
                         Thread.sleep(2000);
-                        LOG.info("In queue: " + in.size());
+                        LOG.log(Level.INFO, "In queue: {0}", in.size());
                     }
                     for (WikiUDpipeProcessThread t : list) {
                         t.setRun(false);
