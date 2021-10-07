@@ -32,7 +32,6 @@
  * GNU GENERAL PUBLIC LICENSE - Version 3, 29 June 2007
  *
  */
-
 package di.uniba.it.wikioie.cmd;
 
 import di.uniba.it.wikioie.data.WikiDoc;
@@ -60,9 +59,9 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 /**
- * This class processes a Wikipedia dump using UDPipe and extracts triples using a WikiExtractor class.
- * The output is stored in JSON format.
- * 
+ * This class processes a Wikipedia dump using UDPipe and extracts triples using
+ * a WikiExtractor class. The output is stored in JSON format.
+ *
  * @author pierpaolo
  */
 public class ProcessAndExtract {
@@ -80,7 +79,8 @@ public class ProcessAndExtract {
                 process(f);
             }
         } else {
-            if (file.isFile() && file.getName().startsWith("wiki_")) {
+            //if (file.isFile() && file.getName().startsWith("wiki_")) {
+            if (file.isFile()) {
                 BufferedReader reader = new BufferedReader(new FileReader(file));
                 String id = "";
                 String title = "";
@@ -138,7 +138,7 @@ public class ProcessAndExtract {
                     for (int i = 0; i < nt; i++) {
                         UDPParser parser = new UDPParser(Config.getInstance().getValue("udp.address"), Config.getInstance().getValue("udp.model"));
                         BufferedWriter writer = new BufferedWriter(new FileWriter(cmd.getOptionValue("o") + "/wikiext_" + i));
-                        WikiExtractor ie=(WikiExtractor) ClassLoader.getSystemClassLoader().loadClass("di.uniba.it.wikioie.process."+cmd.getOptionValue("p"))
+                        WikiExtractor ie = (WikiExtractor) ClassLoader.getSystemClassLoader().loadClass("di.uniba.it.wikioie.process." + cmd.getOptionValue("p"))
                                 .getDeclaredConstructor().newInstance();
                         list.add(new WikiProcessThread(in, parser, ie, writer));
                         buffs.add(writer);
@@ -147,8 +147,13 @@ public class ProcessAndExtract {
                         t.start();
                     }
                     LOG.log(Level.INFO, "Input dump: {0}", cmd.getOptionValue("i"));
-                    process(new File(cmd.getOptionValue("o")));
                     LOG.info("Processing...");
+                    process(new File(cmd.getOptionValue("o")));
+                    LOG.info("Waiting for queue...");
+                    while (!in.isEmpty()) {
+                        Thread.sleep(2000);
+                        LOG.info("In queue: " + in.size());
+                    }
                     for (WikiProcessThread t : list) {
                         t.setRun(false);
                     }

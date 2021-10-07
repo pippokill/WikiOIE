@@ -78,7 +78,8 @@ public class ProcessUDpipe {
                 process(f);
             }
         } else {
-            if (file.isFile() && file.getName().startsWith("wiki_")) {
+            //if (file.isFile() && file.getName().startsWith("wiki_")) {
+            if (file.isFile()) {    
                 BufferedReader reader = new BufferedReader(new FileReader(file));
                 String id = "";
                 String title = "";
@@ -143,8 +144,13 @@ public class ProcessUDpipe {
                         t.start();
                     }
                     LOG.log(Level.INFO, "Input dump: {0}", cmd.getOptionValue("i"));
-                    process(new File(cmd.getOptionValue("i")));
                     LOG.info("Processing...");
+                    process(new File(cmd.getOptionValue("i")));
+                    LOG.info("Waiting for queue...");
+                    while (!in.isEmpty()) {
+                        Thread.sleep(2000);
+                        LOG.info("In queue: " + in.size());
+                    }
                     for (WikiUDpipeProcessThread t : list) {
                         t.setRun(false);
                     }
