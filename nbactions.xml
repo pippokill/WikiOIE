@@ -14,7 +14,7 @@
                 <exec.executable>java</exec.executable>
                 <exec.mainClass>di.uniba.it.wikioie.cmd.CreateDataset</exec.mainClass>
                 <exec.vmArgs></exec.vmArgs>
-                <exec.appArgs>-i /home/pierpaolo/Scaricati/temp/bandi/extraction -o /home/pierpaolo/Scaricati/temp/bandi/triples.tsv -t</exec.appArgs>
+                <exec.appArgs>-i /home/pierpaolo/Scaricati/temp/bandi/extraction -o /home/pierpaolo/Scaricati/temp/bandi/triple.tsv -t</exec.appArgs>
             </properties>
         </action>
         <action>
@@ -32,7 +32,7 @@
                 <jpda.listen>true</jpda.listen>
                 <exec.mainClass>di.uniba.it.wikioie.cmd.CreateDataset</exec.mainClass>
                 <exec.vmArgs>-agentlib:jdwp=transport=dt_socket,server=n,address=${jpda.address}</exec.vmArgs>
-                <exec.appArgs>-i /home/pierpaolo/Scaricati/temp/bandi/extraction -o /home/pierpaolo/Scaricati/temp/bandi/triples.tsv -t</exec.appArgs>
+                <exec.appArgs>-i /home/pierpaolo/Scaricati/temp/bandi/extraction -o /home/pierpaolo/Scaricati/temp/bandi/triple.tsv -t</exec.appArgs>
             </properties>
         </action>
         <action>
@@ -49,7 +49,7 @@
                 <exec.executable>java</exec.executable>
                 <exec.mainClass>di.uniba.it.wikioie.cmd.CreateDataset</exec.mainClass>
                 <exec.vmArgs></exec.vmArgs>
-                <exec.appArgs>-i /home/pierpaolo/Scaricati/temp/bandi/extraction -o /home/pierpaolo/Scaricati/temp/bandi/triples.tsv -t</exec.appArgs>
+                <exec.appArgs>-i /home/pierpaolo/Scaricati/temp/bandi/extraction -o /home/pierpaolo/Scaricati/temp/bandi/triple.tsv -t</exec.appArgs>
             </properties>
         </action>
     </actions>

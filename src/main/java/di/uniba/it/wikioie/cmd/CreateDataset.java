@@ -133,8 +133,8 @@ public class CreateDataset {
                                         }
                                     }
                                 }
-                            } catch (JsonSyntaxException | IOException ex) {
-                                LOG.log(Level.WARNING, "I/O exception", ex);
+                            } catch (Exception ex) {
+                                LOG.log(Level.WARNING, "I/O exception in line", ex);
                             }
                         }
                         reader.close();

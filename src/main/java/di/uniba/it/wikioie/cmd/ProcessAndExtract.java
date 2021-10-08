@@ -166,6 +166,7 @@ public class ProcessAndExtract {
                         w.close();
                     }
                     LOG.log(Level.INFO, "Processed: {0}", pc);
+                    System.exit(0);
                 } catch (Exception ex) {
                     Logger.getLogger(ProcessAndExtract.class.getName()).log(Level.SEVERE, null, ex);
                 }

@@ -136,7 +136,6 @@ public class ProcessUDpipe {
                     for (int i = 0; i < nt; i++) {
                         UDPParser parser = new UDPParser(Config.getInstance().getValue("udp.address"), Config.getInstance().getValue("udp.model"));
                         BufferedWriter writer = new BufferedWriter(new FileWriter(cmd.getOptionValue("o") + "/wikiext_" + i));
-                        
                         list.add(new WikiUDpipeProcessThread(in, parser, writer));
                         buffs.add(writer);
                     }
@@ -163,6 +162,7 @@ public class ProcessUDpipe {
                         w.close();
                     }
                     LOG.log(Level.INFO, "Processed: {0}", pc);
+                    System.exit(0);
                 } catch (Exception ex) {
                     Logger.getLogger(ProcessUDpipe.class.getName()).log(Level.SEVERE, null, ex);
                 }

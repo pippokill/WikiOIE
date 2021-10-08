@@ -230,7 +230,13 @@ public class WikiOIEIndex {
                 } else {
                     reader = new BufferedReader(new FileReader(file));
                 }
-                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(outputdir.getAbsolutePath() + "/" + file.getName().replace(".gz", "_proc.gz")))));
+                String filename;
+                if (file.getName().endsWith(".gz")) {
+                    filename = outputdir.getAbsolutePath() + "/" + file.getName().replace(".gz", "_proc.gz");
+                } else {
+                    filename = outputdir.getAbsolutePath() + "/" + file.getName() + "_proc.gz";
+                }
+                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(filename))));
                 while (reader.ready()) {
                     String line = reader.readLine();
                     Passage data = gson.fromJson(line, Passage.class);
