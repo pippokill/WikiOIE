@@ -159,7 +159,7 @@ public class ProcessAndExtract {
                     }
                     LOG.info("Waiting for threads...");
                     for (Thread t : list) {
-                        t.join();
+                        t.join(1000 * 60 * 2); //wait for 2 minutes
                     }
                     LOG.info("Closing...");
                     for (BufferedWriter w : buffs) {
