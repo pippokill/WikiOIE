@@ -62,12 +62,12 @@ import java.util.zip.GZIPInputStream;
 public class Count {
 
     private static final String[] countFieldLabel = new String[]{"subj", "pred", "obj"};
-    
+
     private static final Logger LOG = Logger.getLogger(Count.class.getName());
-    
+
     private static void addValue(Map<String, Counter<String>> map, String value) {
         Counter<String> c = map.get(value);
-        if (c==null) {
+        if (c == null) {
             map.put(value, new Counter<>(value));
         } else {
             c.increment();
@@ -98,11 +98,16 @@ public class Count {
                     }
                     Gson gson = new Gson();
                     while (reader.ready()) {
-                        Passage passage = gson.fromJson(reader.readLine(), Passage.class);
-                        for (Triple triple : passage.getTriples()) {
-                            addValue(map[0], triple.getSubject().getSpan().toLowerCase());
-                            addValue(map[1], triple.getPredicate().getSpan().toLowerCase());
-                            addValue(map[2], triple.getObject().getSpan().toLowerCase());
+                        String line = reader.readLine();
+                        try {
+                            Passage passage = gson.fromJson(line, Passage.class);
+                            for (Triple triple : passage.getTriples()) {
+                                addValue(map[0], triple.getSubject().getSpan().toLowerCase());
+                                addValue(map[1], triple.getPredicate().getSpan().toLowerCase());
+                                addValue(map[2], triple.getObject().getSpan().toLowerCase());
+                            }
+                        } catch (Exception ex) {
+                            LOG.log(Level.INFO, "Error to process line", ex);
                         }
                     }
                     reader.close();
@@ -137,7 +142,5 @@ public class Count {
             Logger.getLogger(Count.class.getName()).log(Level.SEVERE, "Not valid arguments, input directory is necessary.");
         }
     }
-
-    
 
 }

@@ -239,14 +239,18 @@ public class WikiOIEIndex {
                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(filename))));
                 while (reader.ready()) {
                     String line = reader.readLine();
-                    Passage data = gson.fromJson(line, Passage.class);
-                    pc++;
-                    if (processor != null) {
-                        data = processor.process(data);
+                    try {
+                        Passage data = gson.fromJson(line, Passage.class);
+                        pc++;
+                        if (processor != null) {
+                            data = processor.process(data);
+                        }
+                        data.setConll(null);
+                        writer.append(gson.toJson(data, Passage.class));
+                        writer.newLine();
+                    } catch (Exception ex) {
+                        LOG.log(Level.INFO, "Error to process line", ex);
                     }
-                    data.setConll(null);
-                    writer.append(gson.toJson(data, Passage.class));
-                    writer.newLine();
                 }
                 reader.close();
                 writer.close();

@@ -42,8 +42,10 @@ import di.uniba.it.wikioie.udp.UDPParser;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -51,6 +53,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.zip.GZIPOutputStream;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -135,7 +138,8 @@ public class ProcessUDpipe {
                     LOG.log(Level.INFO, "Output dir: {0}", cmd.getOptionValue("o"));
                     for (int i = 0; i < nt; i++) {
                         UDPParser parser = new UDPParser(Config.getInstance().getValue("udp.address"), Config.getInstance().getValue("udp.model"));
-                        BufferedWriter writer = new BufferedWriter(new FileWriter(cmd.getOptionValue("o") + "/wikiext_" + i));
+                        //BufferedWriter writer = new BufferedWriter(new FileWriter(cmd.getOptionValue("o") + "/wikiext_" + i));
+                        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(cmd.getOptionValue("o") + "/oie_udpipe_" + i + ".gz"))));
                         list.add(new WikiUDpipeProcessThread(in, parser, writer));
                         buffs.add(writer);
                     }
@@ -155,14 +159,13 @@ public class ProcessUDpipe {
                     }
                     LOG.info("Waiting for threads...");
                     for (Thread t : list) {
-                        t.join(1000 * 60 * 2); //wait for 2 minutes
+                        t.join(1000 * 10); //wait for 30 sec
                     }
                     LOG.info("Closing...");
                     for (BufferedWriter w : buffs) {
                         w.close();
                     }
                     LOG.log(Level.INFO, "Processed: {0}", pc);
-                    System.exit(0);
                 } catch (Exception ex) {
                     Logger.getLogger(ProcessUDpipe.class.getName()).log(Level.SEVERE, null, ex);
                 }

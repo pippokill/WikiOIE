@@ -91,7 +91,7 @@ public class WikiProcessThread extends Thread {
         while (run) {
             WikiDoc doc = null;
             try {
-                doc = in.poll(60, TimeUnit.SECONDS);
+                doc = in.poll(5, TimeUnit.SECONDS);
             } catch (InterruptedException ex) {
                 LOG.log(Level.SEVERE, null, ex);
             }
