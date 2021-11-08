@@ -65,7 +65,8 @@ public class Process {
         options = options.addOption(new Option("i", true, "Input directory"))
                 .addOption(new Option("o", true, "Output directory"))
                 .addOption(new Option("p", true, "Processing class"))
-                .addOption(new Option("t", true, "Training file (optional)"));
+                .addOption(new Option("t", true, "Training file (optional)"))
+                .addOption(new Option("c", true, "C value (optional, default=1)"));
         try {
             DefaultParser parser = new DefaultParser();
             CommandLine cmd = parser.parse(options, args);
@@ -74,7 +75,7 @@ public class Process {
                 PassageProcessor processor = null;
                 try {
                     if (cmd.hasOption("t")) {
-                        processor = (PassageProcessor) ClassLoader.getSystemClassLoader().loadClass("di.uniba.it.wikioie.indexing.post." + cmd.getOptionValue("p")).getDeclaredConstructor(File.class).newInstance(new File(cmd.getOptionValue("t")));
+                        processor = (PassageProcessor) ClassLoader.getSystemClassLoader().loadClass("di.uniba.it.wikioie.indexing.post." + cmd.getOptionValue("p")).getDeclaredConstructor(File.class, Double.class).newInstance(new File(cmd.getOptionValue("t")), Double.parseDouble(cmd.getOptionValue("c", "1")));
                     } else {
                         processor = (PassageProcessor) ClassLoader.getSystemClassLoader().loadClass("di.uniba.it.wikioie.indexing.post." + cmd.getOptionValue("p")).getDeclaredConstructor().newInstance();
                     }

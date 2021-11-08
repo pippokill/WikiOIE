@@ -17,12 +17,13 @@ Any value defined here will override the pom.xml file value but is only applicab
     </properties>
     <config-data xmlns="http://www.netbeans.org/ns/maven-config-data/1">
         <configurations>
+            <configuration id="counting" profiles=""/>
             <configuration id="dataset" profiles=""/>
             <configuration id="indexing" profiles=""/>
             <configuration id="processing" profiles=""/>
             <configuration id="udpipe" profiles=""/>
             <configuration id="udpipe and processing" profiles=""/>
-            <configuration id="counting" profiles=""/>
+            <configuration id="shuffling" profiles=""/>
         </configurations>
     </config-data>
 </project-shared-configuration>

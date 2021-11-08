@@ -44,12 +44,51 @@ import org.apache.commons.csv.CSVRecord;
  */
 public class CoTraining {
 
-    private static final double TH_PRED = 0.85;
+    private double thPred = 0.85;
+    
+    private SolverType solver = SolverType.L2R_LR;
 
     private static final Logger LOG = Logger.getLogger(CoTraining.class.getName());
 
+    /**
+     *
+     */
     public enum BootstrappingHeaders {
-        title, text, score, subject, predicate, object, label
+
+        /**
+         *
+         */
+        title,
+
+        /**
+         *
+         */
+        text,
+
+        /**
+         *
+         */
+        score,
+
+        /**
+         *
+         */
+        subject,
+
+        /**
+         *
+         */
+        predicate,
+
+        /**
+         *
+         */
+        object,
+
+        /**
+         *
+         */
+        label
     }
 
     private Pair<UDPSentence, Triple> ieprocessing(String text, UDPParser parser, WikiExtractor extractor, String subj, String pred, String obj) throws IOException {
@@ -65,6 +104,11 @@ public class CoTraining {
         return null;
     }
 
+    /**
+     *
+     * @param pair
+     * @return
+     */
     public Set<String> generateFeatureSet(Pair<UDPSentence, Triple> pair) {
         Set<String> set = new HashSet<>();
         Triple triple = pair.getB();
@@ -101,28 +145,55 @@ public class CoTraining {
         List<FileInstance> list = new ArrayList<>();
         Reader in = new FileReader(inputFile);
         Iterable<CSVRecord> records = CSVFormat.TDF.withFirstRecordAsHeader().parse(in);
+        int id = 0;
         for (CSVRecord record : records) {
-            list.add(new FileInstance(record.get("text"),
+            list.add(new FileInstance(id, record.get("text"),
                     record.get("subject"),
                     record.get("predicate"),
                     record.get("object"),
                     Float.parseFloat(record.get("score"))));
+            id++;
         }
         return list;
     }
 
+    private List<FileInstance> loadUnlabelledCSV(File inputFile) throws IOException {
+        List<FileInstance> list = new ArrayList<>();
+        Reader in = new FileReader(inputFile);
+        Iterable<CSVRecord> records = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(in);
+        int id = 0;
+        for (CSVRecord record : records) {
+            list.add(new FileInstance(id, record.get("text"),
+                    record.get("subject"),
+                    record.get("predicate"),
+                    record.get("object"),
+                    Float.parseFloat(record.get("score"))));
+            id++;
+        }
+        return list;
+    }
+
+    /**
+     *
+     * @param inputFile
+     * @param parser
+     * @param extractor
+     * @return
+     * @throws IOException
+     */
     public TrainingSet generateFeatures(File inputFile, UDPParser parser, WikiExtractor extractor) throws IOException {
         Reader in = new FileReader(inputFile);
         TrainingSet tr = new TrainingSet();
         Iterable<CSVRecord> records = CSVFormat.DEFAULT.withHeader(BootstrappingHeaders.class).withFirstRecordAsHeader().parse(in);
+        int id = 0;
         for (CSVRecord record : records) {
             String text = record.get(BootstrappingHeaders.text);
             Pair<UDPSentence, Triple> pair = ieprocessing(text, parser, extractor, record.get(BootstrappingHeaders.subject), record.get(BootstrappingHeaders.predicate), record.get(BootstrappingHeaders.object));
             if (pair == null) {
-                LOG.warning("No triple");
+                //LOG.warning("No triple");
             } else {
                 Set<String> fset = generateFeatureSet(pair);
-                Instance inst = new Instance();
+                Instance inst = new Instance(id);
                 for (String v : fset) {
                     int fid = tr.addFeature(v);
                     inst.setFeature(fid, 1);
@@ -136,21 +207,49 @@ public class CoTraining {
                 inst.setLabel(Integer.parseInt(record.get(BootstrappingHeaders.label)));
                 tr.addInstance(inst);
             }
+            id++;
         }
         in.close();
         return tr;
     }
 
+    /**
+     *
+     * @param file
+     * @return
+     * @throws IOException
+     */
+    public List<Integer> loadLabels(File file) throws IOException {
+        List<Integer> labels = new ArrayList<>();
+        FileReader in = new FileReader(file);
+        Iterable<CSVRecord> records = CSVFormat.DEFAULT.withHeader(BootstrappingHeaders.class).withFirstRecordAsHeader().parse(in);
+        for (CSVRecord record : records) {
+            labels.add(Integer.parseInt(record.get(BootstrappingHeaders.label)));
+        }
+        in.close();
+        return labels;
+    }
+
+    /**
+     *
+     * @param map
+     * @param ts
+     * @param parser
+     * @param extractor
+     * @return
+     * @throws IOException
+     */
     public TrainingSet generateTestFeatures(Map<String, Integer> map, List<FileInstance> ts, UDPParser parser, WikiExtractor extractor) throws IOException {
         TrainingSet tr = new TrainingSet(map);
+        int id = 0;
         for (FileInstance finst : ts) {
             String text = finst.getText();
             Pair<UDPSentence, Triple> pair = ieprocessing(text, parser, extractor, finst.getSubject(), finst.getPredicate(), finst.getObject());
             if (pair == null) {
-                LOG.warning("No triple");
+                //LOG.warning("No triple");
             } else {
                 Set<String> fset = generateFeatureSet(pair);
-                Instance inst = new Instance();
+                Instance inst = new Instance(id);
                 for (String v : fset) {
                     Integer fid = tr.getId(v);
                     if (fid != null) {
@@ -165,11 +264,18 @@ public class CoTraining {
                 inst.setFeature(sid, pair.getB().getScore());
                 tr.addInstance(inst);
             }
+            id++;
         }
         return tr;
     }
 
-    private void saveTr(TrainingSet ts, File outputfile) throws IOException {
+    /**
+     *
+     * @param ts
+     * @param outputfile
+     * @throws IOException
+     */
+    public void saveTr(TrainingSet ts, File outputfile) throws IOException {
         BufferedWriter writer = new BufferedWriter(new FileWriter(outputfile));
         List<Integer> ids = new ArrayList<>(ts.getDict().values());
         Collections.sort(ids);
@@ -187,7 +293,13 @@ public class CoTraining {
         writer.close();
     }
 
-    public Model train(TrainingSet ts) {
+    /**
+     *
+     * @param ts
+     * @param C
+     * @return
+     */
+    public Model train(TrainingSet ts, double C) {
         List<Integer> ids = new ArrayList<>(ts.getDict().values());
         Collections.sort(ids);
         Problem problem = new Problem();
@@ -210,15 +322,64 @@ public class CoTraining {
         }
         problem.x = x;
         problem.y = y;
-        SolverType solver = SolverType.L2R_LR_DUAL;
-        double C = 1.0;
         double eps = 0.1;
         Parameter parameter = new Parameter(solver, C, eps);
         Model model = Linear.train(problem, parameter);
         return model;
     }
 
-    private List<Pair<Integer, Integer>> test(Model model, TrainingSet ts) {
+    /**
+     *
+     * @param ts
+     * @param k
+     * @param C
+     */
+    @Deprecated
+    public void kfold(TrainingSet ts, int k, double C) {
+        List<Integer> ids = new ArrayList<>(ts.getDict().values());
+        Collections.sort(ids);
+        Problem problem = new Problem();
+        problem.l = ts.getSet().size();
+        problem.n = ts.getDict().size();
+        Feature[][] x = new Feature[problem.l][];
+        double[] y = new double[problem.l];
+        for (int l = 0; l < ts.getSet().size(); l++) {
+            Instance inst = ts.getSet().get(l);
+            x[l] = new Feature[inst.getFeatures().size()];
+            int j = 0;
+            for (Integer id : ids) {
+                float v = inst.getFeature(id);
+                if (v != 0) {
+                    x[l][j] = new FeatureNode(id, v);
+                    j++;
+                }
+            }
+            y[l] = inst.getLabel();
+        }
+        problem.x = x;
+        problem.y = y;
+        double eps = 0.1;
+        Parameter parameter = new Parameter(solver, C, eps);
+        double[] p = new double[y.length];
+        Linear.crossValidation(problem, parameter, k, p);
+        List<Integer> labels = new ArrayList<>();
+        for (double v : y) {
+            labels.add((int) Math.round(v));
+        }
+        List<Integer> pred = new ArrayList<>();
+        for (double v : p) {
+            pred.add((int) Math.round(v));
+        }
+        computeMetrics(labels, pred);
+    }
+
+    /**
+     *
+     * @param model
+     * @param ts
+     * @return
+     */
+    public List<Pair<Integer, Integer>> testWithProb(Model model, TrainingSet ts) {
         List<Pair<Integer, Integer>> r = new ArrayList<>();
         List<Integer> ids = new ArrayList<>(ts.getDict().values());
         Collections.sort(ids);
@@ -236,9 +397,63 @@ public class CoTraining {
             double[] prob = new double[2];
             double l = Linear.predictProbability(model, fx, prob);
             //System.out.println(l + "\t" + Arrays.toString(prob));
-            if (prob[0] >= TH_PRED || prob[1] >= TH_PRED) {
-                r.add(new Pair<>(k, (int) Math.round(l)));
+            if (prob[0] >= thPred || prob[1] >= thPred) {
+                r.add(new Pair<>(inst.getId(), (int) Math.round(l)));
             }
+        }
+        return r;
+    }
+
+    /**
+     *
+     * @param model
+     * @param ts
+     * @return
+     */
+    public List<Integer> test(Model model, TrainingSet ts) {
+        List<Integer> r = new ArrayList<>();
+        List<Integer> ids = new ArrayList<>(ts.getDict().values());
+        Collections.sort(ids);
+        for (int k = 0; k < ts.getSet().size(); k++) {
+            Instance inst = ts.getSet().get(k);
+            Feature[] fx = new Feature[inst.getFeatures().size()];
+            int j = 0;
+            for (Integer id : ids) {
+                float v = inst.getFeature(id);
+                if (v != 0) {
+                    fx[j] = new FeatureNode(id, v);
+                    j++;
+                }
+            }
+            double l = Linear.predict(model, fx);
+            r.add((int) Math.round(l));
+        }
+        return r;
+    }
+
+    /**
+     *
+     * @param model
+     * @param ts
+     * @return
+     */
+    public List<Pair<Integer, Integer>> testWithoutProb(Model model, TrainingSet ts) {
+        List<Pair<Integer, Integer>> r = new ArrayList<>();
+        List<Integer> ids = new ArrayList<>(ts.getDict().values());
+        Collections.sort(ids);
+        for (int k = 0; k < ts.getSet().size(); k++) {
+            Instance inst = ts.getSet().get(k);
+            Feature[] fx = new Feature[inst.getFeatures().size()];
+            int j = 0;
+            for (Integer id : ids) {
+                float v = inst.getFeature(id);
+                if (v != 0) {
+                    fx[j] = new FeatureNode(id, v);
+                    j++;
+                }
+            }
+            double l = Linear.predict(model, fx);
+            r.add(new Pair(inst.getId(), (int) Math.round(l)));
         }
         return r;
     }
@@ -250,7 +465,7 @@ public class CoTraining {
                 n++;
             }
         }
-        return n / ts.getSet().size();
+        return n / (double) ts.getSet().size();
     }
 
     private void balance(List<Pair<Integer, Integer>> r, double bal) {
@@ -261,22 +476,41 @@ public class CoTraining {
                 n1++;
             }
         }
-        double newbal = n1 / r.size();
+        double newbal = n1 / (double) r.size();
         if (newbal > bal) {
             while (newbal > bal) {
-                r.remove(r.size() - 1);
-                n1--;
-                newbal = n1 / r.size();
+                if (r.get(r.size() - 1).getB() == 1) {
+                    r.remove(r.size() - 1);
+                    n1--;
+                    newbal = n1 / (double) r.size();
+                } else {
+                    break;
+                }
             }
         } else {
             while (newbal < bal) {
-                r.remove(0);
-                newbal = n1 / r.size();
+                if (r.get(0).getB() == 0) {
+                    r.remove(0);
+                    newbal = n1 / (double) r.size();
+                } else {
+                    break;
+                }
             }
         }
+        System.out.println("New balance=" + newbal);
     }
 
-    private void cotraining(File annotatedFile, File dataFile, String outputdir, int p, int maxit) throws IOException {
+    /**
+     *
+     * @param annotatedFile
+     * @param dataFile
+     * @param outputdir
+     * @param p
+     * @param maxit
+     * @param C
+     * @throws IOException
+     */
+    public void cotraining(File annotatedFile, File dataFile, String outputdir, int p, int maxit, double C) throws IOException {
         UDPParser parser = new UDPParser(Config.getInstance().getValue("udp.address"), Config.getInstance().getValue("udp.model"));
         WikiExtractor ie = new WikiITSimpleDepExtractor();
         List<FileInstance> unlabelled = loadUnlabelled(dataFile);
@@ -294,12 +528,18 @@ public class CoTraining {
             TrainingSet ts = generateFeatures(annotatedFile, parser, ie);
             Utils.saveDict(ts.getDict(), new File(outputdir + "/tr_" + it + ".dict"));
             double bal = computeBalance(ts);
+            System.out.println("Balance=" + bal);
             LOG.info("Training...");
             // build model
-            Model model = train(ts);
+            Model model = train(ts, C);
             LOG.info("Testing...");
             // classify unlabeled data
-            List<Pair<Integer, Integer>> r = test(model, generateTestFeatures(ts.getDict(), subList, parser, ie));
+            List<Pair<Integer, Integer>> r;
+            if (thPred > 0) {
+                r = testWithProb(model, generateTestFeatures(ts.getDict(), subList, parser, ie));
+            } else {
+                r = testWithoutProb(model, generateTestFeatures(ts.getDict(), subList, parser, ie));
+            }
             balance(r, bal);
             LOG.log(Level.INFO, "New examples {0}", r.size());
             // save new training set
@@ -313,16 +553,98 @@ public class CoTraining {
             }
             writer.close();
             annotatedFile = newFile;
-            // remove 
+            // remove
+            Set<Integer> removeId = new HashSet<>();
             for (Pair<Integer, Integer> o : r) {
-                unlabelled.remove(o.getA().intValue());
+                removeId.add(o.getA());
+            }
+            for (int k = unlabelled.size() - 1; k >= 0; k--) {
+                if (removeId.contains(unlabelled.get(k).getId())) {
+                    unlabelled.remove(k);
+                }
+            }
+            if (r.isEmpty()) {
+                System.out.println("Interrupted...no new instances.");
+                break;
             }
             it++;
             if (it >= maxit) {
+                System.out.println("Interrupted...max iterations.");
                 break;
             }
         }
     }
+
+    /**
+     *
+     * @param annotatedFile
+     * @param k
+     * @param C
+     * @throws IOException
+     */
+    @Deprecated
+    public void kfold(File annotatedFile, int k, double C) throws IOException {
+        UDPParser parser = new UDPParser(Config.getInstance().getValue("udp.address"), Config.getInstance().getValue("udp.model"));
+        WikiExtractor ie = new WikiITSimpleDepExtractor();
+        TrainingSet tr = generateFeatures(annotatedFile, parser, ie);
+        LOG.info("Training (k-fold)...");
+        // kfold
+        kfold(tr, k, C);
+    }
+
+    /**
+     *
+     * @param trainFile
+     * @param testFile
+     * @param C
+     * @throws IOException
+     */
+    public void trainAndTest(File trainFile, File testFile, double C) throws IOException {
+        UDPParser parser = new UDPParser(Config.getInstance().getValue("udp.address"), Config.getInstance().getValue("udp.model"));
+        WikiExtractor ie = new WikiITSimpleDepExtractor();
+        TrainingSet tr = generateFeatures(trainFile, parser, ie);
+        Model model = train(tr, C);
+        List<FileInstance> unlabelled = loadUnlabelledCSV(testFile);
+        List<Integer> labels = loadLabels(testFile);
+        TrainingSet ts = generateTestFeatures(tr.getDict(), unlabelled, parser, ie);
+        List<Integer> pred = test(model, ts);
+        computeMetrics(labels, pred);
+    }
+
+    private double F(double P, double R) {
+        return (P + R) == 0 ? 0 : 2 * P * R / (P + R);
+    }
+
+    /**
+     *
+     * @param labels
+     * @param predicted
+     */
+    public void computeMetrics(List<Integer> labels, List<Integer> predicted) {
+        int[][] m = new int[2][2];
+        for (int i = 0; i < labels.size(); i++) {
+            m[labels.get(i)][predicted.get(i)]++;
+        }
+        System.out.println("\tPred.");
+        System.out.println("     *--------*--------*");
+        System.out.printf("     |%8d|%8d|%n", m[0][0], m[0][1]);
+        System.out.println("Lab. *--------*--------*");
+        System.out.printf("     |%8d|%8d|%n", m[1][0], m[1][1]);
+        System.out.println("     *--------*--------*");
+        double p0 = (m[0][0] + m[1][0]) == 0 ? 0 : (double) m[0][0] / (double) (m[0][0] + m[1][0]);
+        double r0 = (m[0][0] + m[0][1]) == 0 ? 0 : (double) m[0][0] / (double) (m[0][0] + m[0][1]);
+        double p1 = (m[0][1] + m[1][1]) == 0 ? 0 : (double) m[1][1] / (double) (m[0][1] + m[1][1]);
+        double r1 = (m[1][0] + m[1][1]) == 0 ? 0 : (double) m[1][1] / (double) (m[1][0] + m[1][1]);
+        System.out.println("P_0=" + p0);
+        System.out.println("R_0=" + r0);
+        System.out.println("P_1=" + p1);
+        System.out.println("R_1=" + r1);
+        System.out.println("F_0=" + F(p0, r0));
+        System.out.println("F_1=" + F(p1, r1));
+        System.out.println("F_M=" + F(p0, r0) / F(p1, r1));
+        System.out.println("acc.=" + ((double) (m[0][0] + m[1][1]) / (double) (m[0][0] + m[0][1] + m[1][0] + m[1][1])));
+    }
+    
 
     /**
      * @param args the command line arguments
@@ -330,13 +652,52 @@ public class CoTraining {
     public static void main(String[] args) {
         try {
             CoTraining ct = new CoTraining();
-            ct.cotraining(new File("resources/bootstrapping/simpledep/bootstrapping_20210706.csv"),
-                    new File("resources/bootstrapping/simpledep/triple_simpledep_text_20_01_dd.tsv"),
-                    "resources/bootstrapping/simpledep/",
-                    5000, 10);
+            // set the learning algorithm
+            ct.setSolver(SolverType.L2R_LR);
+            // set the threshold used during self-training
+            ct.setThPred(0.85);
+            // start co-training. Paramters: annotated data, unlabelled data, unlabelled data added to each iteration, max iterations, C
+            ct.cotraining(new File("resources/bootstrapping/bootstrapping_train.csv"),
+                    new File("resources/bootstrapping/triple_simpledep_text_20_01_dd.tsv"),
+                    "resources/bootstrapping/new_reg/",
+                    1000, 20, 10);
+            // evaluate the training set obtained by the self-training
+            ct.trainAndTest(new File("resources/bootstrapping/new_reg/tr_19"), new File("resources/bootstrapping/bootstrapping_test.csv"), 10);
         } catch (IOException ex) {
             Logger.getLogger(CoTraining.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+    
+    /**
+     *
+     * @return
+     */
+    public double getThPred() {
+        return thPred;
+    }
+
+    /**
+     *
+     * @param thPred
+     */
+    public void setThPred(double thPred) {
+        this.thPred = thPred;
+    }
+
+    /**
+     *
+     * @return
+     */
+    public SolverType getSolver() {
+        return solver;
+    }
+
+    /**
+     *
+     * @param solver
+     */
+    public void setSolver(SolverType solver) {
+        this.solver = solver;
     }
 
 }

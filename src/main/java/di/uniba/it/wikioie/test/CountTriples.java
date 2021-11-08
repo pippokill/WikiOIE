@@ -17,6 +17,7 @@ public class CountTriples {
 
     /**
      * @param args the command line arguments
+     * @throws java.io.IOException
      */
     public static void main(String[] args) throws IOException {
         BufferedReader reader=new BufferedReader(new FileReader("/media/pierpaolo/fastExt4/wikidump/wikioie/simpledep_count/subj.count"));

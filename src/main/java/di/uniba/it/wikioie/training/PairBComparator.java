@@ -14,6 +14,12 @@ import java.util.Comparator;
  */
 public class PairBComparator implements Comparator<Pair<Integer, Integer>> {
 
+    /**
+     *
+     * @param o1
+     * @param o2
+     * @return
+     */
     @Override
     public int compare(Pair<Integer, Integer> o1, Pair<Integer, Integer> o2) {
         return o1.getB().compareTo(o2.getB());

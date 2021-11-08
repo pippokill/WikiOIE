@@ -12,7 +12,7 @@
             <properties>
                 <exec.vmArgs></exec.vmArgs>
                 <exec.args>${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
-                <exec.appArgs>/media/pierpaolo/fastExt4/wikidump/wikioie/simpledep_sup/ /media/pierpaolo/fastExt4/wikidump/wikioie/simpledep_sup_count/</exec.appArgs>
+                <exec.appArgs>/media/pierpaolo/fastExt4/wikidump/wikioie/sup_reg /media/pierpaolo/fastExt4/wikidump/wikioie/sup_reg_count</exec.appArgs>
                 <exec.mainClass>di.uniba.it.wikioie.cmd.Count</exec.mainClass>
                 <exec.executable>java</exec.executable>
             </properties>
@@ -29,7 +29,7 @@
             <properties>
                 <exec.vmArgs>-agentlib:jdwp=transport=dt_socket,server=n,address=${jpda.address}</exec.vmArgs>
                 <exec.args>${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
-                <exec.appArgs>/media/pierpaolo/fastExt4/wikidump/wikioie/simpledep_sup/ /media/pierpaolo/fastExt4/wikidump/wikioie/simpledep_sup_count/</exec.appArgs>
+                <exec.appArgs>/media/pierpaolo/fastExt4/wikidump/wikioie/sup_reg /media/pierpaolo/fastExt4/wikidump/wikioie/sup_reg_count</exec.appArgs>
                 <exec.mainClass>di.uniba.it.wikioie.cmd.Count</exec.mainClass>
                 <exec.executable>java</exec.executable>
                 <jpda.listen>true</jpda.listen>
@@ -49,7 +49,7 @@
                 <exec.args>${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
                 <exec.mainClass>di.uniba.it.wikioie.cmd.Count</exec.mainClass>
                 <exec.executable>java</exec.executable>
-                <exec.appArgs>/media/pierpaolo/fastExt4/wikidump/wikioie/simpledep_sup/ /media/pierpaolo/fastExt4/wikidump/wikioie/simpledep_sup_count/</exec.appArgs>
+                <exec.appArgs>/media/pierpaolo/fastExt4/wikidump/wikioie/sup_reg /media/pierpaolo/fastExt4/wikidump/wikioie/sup_reg_count</exec.appArgs>
             </properties>
         </action>
     </actions>

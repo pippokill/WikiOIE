@@ -44,8 +44,13 @@ public class ShuffleCatDataset {
                 Random rnd = new Random();
                 int size = Integer.parseInt(args[2]);
                 Set<Integer> idx = new HashSet<>();
-                for (int i = 0; i < size; i++) {
-                    idx.add(rnd.nextInt(size));
+                int i = 0;
+                while (i < size) {
+                    int ri = rnd.nextInt(size);
+                    if (!idx.contains(ri)) {
+                        idx.add(ri);
+                        i++;
+                    }
                 }
 
                 reader = new FileReader(args[0]);
@@ -53,7 +58,7 @@ public class ShuffleCatDataset {
                 FileWriter writer = new FileWriter(args[1]);
                 CSVPrinter csvout = CSVFormat.TDF.withHeader(csvin.getHeaderNames().toArray(new String[csvin.getHeaderNames().size()])).print(writer);
                 it = csvin.iterator();
-                int i = 0;
+                i = 0;
                 c = 0;
                 while (it.hasNext()) {
                     it.next();

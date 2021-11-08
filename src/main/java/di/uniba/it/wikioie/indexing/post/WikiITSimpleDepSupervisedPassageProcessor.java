@@ -38,6 +38,7 @@ import de.bwaldvogel.liblinear.Feature;
 import de.bwaldvogel.liblinear.FeatureNode;
 import de.bwaldvogel.liblinear.Linear;
 import de.bwaldvogel.liblinear.Model;
+import de.bwaldvogel.liblinear.SolverType;
 import di.uniba.it.wikioie.Utils;
 import di.uniba.it.wikioie.data.Config;
 import di.uniba.it.wikioie.data.Pair;
@@ -79,14 +80,18 @@ public class WikiITSimpleDepSupervisedPassageProcessor implements PassageProcess
 
     private UDPParser parser;
 
+    private final double C;
+
     /**
      *
      * @param trainingfile
+     * @param C
      */
-    public WikiITSimpleDepSupervisedPassageProcessor(File trainingfile) {
+    public WikiITSimpleDepSupervisedPassageProcessor(File trainingfile, Double C) {
         this.wie = new WikiITSimpleDepExtractor();
         this.trainingfile = trainingfile;
         this.parser = new UDPParser(Config.getInstance().getValue("udp.address"), Config.getInstance().getValue("udp.model"));
+        this.C = C;
     }
 
     /**
@@ -99,9 +104,10 @@ public class WikiITSimpleDepSupervisedPassageProcessor implements PassageProcess
         try {
             if (model == null) {
                 LOG.log(Level.INFO, "Load supervised model {0}", trainingfile);
+                tr.setSolver(SolverType.L2R_LR);
                 ts = tr.generateFeatures(trainingfile, parser, wie);
                 LOG.info("Training...");
-                model = tr.train(ts);
+                model = tr.train(ts, C);
             }
             UDPSentence sentence = new UDPSentence(passage.getId(), passage.getText(), passage.getConll());
             List<Token> tokens = UDPParser.getTokens(sentence);
@@ -131,7 +137,7 @@ public class WikiITSimpleDepSupervisedPassageProcessor implements PassageProcess
                 }
             }
             // CHECK THIS!
-            for (Triple t:triples) {
+            for (Triple t : triples) {
                 Utils.invertTriple(sentence, t);
             }
             // ==============

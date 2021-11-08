@@ -131,6 +131,12 @@ public class Utils {
         return set;
     }
 
+    /**
+     *
+     * @param sentence
+     * @param span
+     * @return
+     */
     public static Pair<String, Set<String>> getPosFeature(UDPSentence sentence, Span span) {
         Set<String> set = new HashSet<>();
         StringBuilder sb = new StringBuilder();
@@ -141,6 +147,13 @@ public class Utils {
         return new Pair(sb.toString(), set);
     }
 
+    /**
+     *
+     * @param sentence
+     * @param dep
+     * @param head
+     * @return
+     */
     public static Set<String> getDependencies(UDPSentence sentence, Span dep, Span head) {
         Set<String> set = new HashSet<>();
         Graph<Token, String> graph = sentence.getGraph();
@@ -156,6 +169,12 @@ public class Utils {
         return set;
     }
 
+    /**
+     *
+     * @param inputfile
+     * @param outfile
+     * @throws IOException
+     */
     public static void copyByLine(File inputfile, File outfile) throws IOException {
         BufferedReader in = new BufferedReader(new FileReader(inputfile));
         BufferedWriter out = new BufferedWriter(new FileWriter(outfile));
@@ -167,6 +186,12 @@ public class Utils {
         out.close();
     }
 
+    /**
+     *
+     * @param dict
+     * @param outputfile
+     * @throws IOException
+     */
     public static void saveDict(Map<String, Integer> dict, File outputfile) throws IOException {
         BufferedWriter writer = new BufferedWriter(new FileWriter(outputfile));
         for (String key : dict.keySet()) {
@@ -176,10 +201,18 @@ public class Utils {
         writer.close();
     }
 
+    /**
+     *
+     * @param bootfile
+     * @param datafile
+     * @param outfile
+     * @throws IOException
+     */
     public static void removeDuplicate(File bootfile, File datafile, File outfile) throws IOException {
         Reader in = new FileReader(bootfile);
         Iterable<CSVRecord> records = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(in);
         Map<String, List<FileInstance>> bootins = new HashMap<>();
+        int id = 0;
         for (CSVRecord record : records) {
             String title = record.get("title");
             List<FileInstance> l = bootins.get(title);
@@ -187,8 +220,9 @@ public class Utils {
                 l = new ArrayList<>();
                 bootins.put(title, l);
             }
-            FileInstance inst = new FileInstance(record.get("text"), record.get("subject"), record.get("predicate"), record.get("object"));
+            FileInstance inst = new FileInstance(id, record.get("text"), record.get("subject"), record.get("predicate"), record.get("object"));
             l.add(inst);
+            id++;
         }
         in.close();
 
@@ -226,6 +260,12 @@ public class Utils {
         writer.close();
     }
 
+    /**
+     *
+     * @param sentence
+     * @param triple
+     * @return
+     */
     public static boolean invertTriple(UDPSentence sentence, Triple triple) {
         boolean subjIsObj = false;
         boolean subjIsSubj = false;

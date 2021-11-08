@@ -22,22 +22,42 @@ public class TrainingSet {
 
     private int i = 1;
 
+    /**
+     *
+     */
     public TrainingSet() {
         dict = new HashMap<>();
     }
 
+    /**
+     *
+     * @param dict
+     */
     public TrainingSet(Map<String, Integer> dict) {
         this.dict = dict;
     }
 
+    /**
+     *
+     * @return
+     */
     public Map<String, Integer> getDict() {
         return dict;
     }
 
+    /**
+     *
+     * @return
+     */
     public List<Instance> getSet() {
         return set;
     }
 
+    /**
+     *
+     * @param fvalue
+     * @return
+     */
     public int addFeature(String fvalue) {
         Integer id = dict.get(fvalue);
         if (id == null) {
@@ -48,10 +68,19 @@ public class TrainingSet {
         return id;
     }
 
+    /**
+     *
+     * @param instance
+     */
     public void addInstance(Instance instance) {
         set.add(instance);
     }
 
+    /**
+     *
+     * @param fvalue
+     * @return
+     */
     public Integer getId(String fvalue) {
         return dict.get(fvalue);
     }

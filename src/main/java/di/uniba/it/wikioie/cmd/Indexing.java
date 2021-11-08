@@ -68,7 +68,8 @@ public class Indexing {
                 .addOption(new Option("f", true, "Filter file, (optional)"))
                 .addOption(new Option("m", true, "Min occurrances (optional, default 5)"))
                 .addOption(new Option("p", true, "Post processing class (optional)"))
-                .addOption(new Option("t", true, "Training file (optional)"));
+                .addOption(new Option("t", true, "Training file (optional)"))
+                .addOption(new Option("c", true, "C value (optional, default=1)"));
         try {
             DefaultParser parser = new DefaultParser();
             CommandLine cmd = parser.parse(options, args);
@@ -78,7 +79,7 @@ public class Indexing {
                 if (cmd.hasOption("p")) {
                     try {
                         if (cmd.hasOption("t")) {
-                            processor = (PassageProcessor) ClassLoader.getSystemClassLoader().loadClass("di.uniba.it.wikioie.indexing.post." + cmd.getOptionValue("p")).getDeclaredConstructor(File.class).newInstance(new File(cmd.getOptionValue("t")));
+                            processor = (PassageProcessor) ClassLoader.getSystemClassLoader().loadClass("di.uniba.it.wikioie.indexing.post." + cmd.getOptionValue("p")).getDeclaredConstructor(File.class, Double.class).newInstance(new File(cmd.getOptionValue("t")), Double.parseDouble(cmd.getOptionValue("c", "1")));
                         } else {
                             processor = (PassageProcessor) ClassLoader.getSystemClassLoader().loadClass("di.uniba.it.wikioie.indexing.post." + cmd.getOptionValue("p")).getDeclaredConstructor().newInstance();
                         }
