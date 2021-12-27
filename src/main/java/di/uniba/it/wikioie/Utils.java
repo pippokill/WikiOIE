@@ -248,13 +248,14 @@ public class Utils {
         BufferedWriter writer = new BufferedWriter(new FileWriter(outfile));
         in = new FileReader(datafile);
         BufferedReader reader = new BufferedReader(in);
-        r = 1;
+        r = 0;
         while (reader.ready()) {
             String line = reader.readLine();
             if (!ids.contains(r)) {
                 writer.write(line);
                 writer.newLine();
             }
+            r++;
         }
         reader.close();
         writer.close();
