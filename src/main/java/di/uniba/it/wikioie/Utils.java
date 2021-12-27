@@ -248,7 +248,7 @@ public class Utils {
         BufferedWriter writer = new BufferedWriter(new FileWriter(outfile));
         in = new FileReader(datafile);
         BufferedReader reader = new BufferedReader(in);
-        r = 0;
+        r = 1;
         while (reader.ready()) {
             String line = reader.readLine();
             if (!ids.contains(r)) {
