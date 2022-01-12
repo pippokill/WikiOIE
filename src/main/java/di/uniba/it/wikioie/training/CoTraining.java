@@ -45,7 +45,7 @@ import org.apache.commons.csv.CSVRecord;
 public class CoTraining {
 
     private double thPred = 0.85;
-    
+
     private SolverType solver = SolverType.L2R_LR;
 
     private static final Logger LOG = Logger.getLogger(CoTraining.class.getName());
@@ -59,32 +59,26 @@ public class CoTraining {
          *
          */
         title,
-
         /**
          *
          */
         text,
-
         /**
          *
          */
         score,
-
         /**
          *
          */
         subject,
-
         /**
          *
          */
         predicate,
-
         /**
          *
          */
         object,
-
         /**
          *
          */
@@ -246,7 +240,8 @@ public class CoTraining {
             String text = finst.getText();
             Pair<UDPSentence, Triple> pair = ieprocessing(text, parser, extractor, finst.getSubject(), finst.getPredicate(), finst.getObject());
             if (pair == null) {
-                //LOG.warning("No triple");
+                Instance inst = new Instance(id);
+                tr.addInstance(inst);
             } else {
                 Set<String> fset = generateFeatureSet(pair);
                 Instance inst = new Instance(id);
@@ -416,17 +411,21 @@ public class CoTraining {
         Collections.sort(ids);
         for (int k = 0; k < ts.getSet().size(); k++) {
             Instance inst = ts.getSet().get(k);
-            Feature[] fx = new Feature[inst.getFeatures().size()];
-            int j = 0;
-            for (Integer id : ids) {
-                float v = inst.getFeature(id);
-                if (v != 0) {
-                    fx[j] = new FeatureNode(id, v);
-                    j++;
+            if (inst.getFeatures().isEmpty()) {
+                r.add(null);
+            } else {
+                Feature[] fx = new Feature[inst.getFeatures().size()];
+                int j = 0;
+                for (Integer id : ids) {
+                    float v = inst.getFeature(id);
+                    if (v != 0) {
+                        fx[j] = new FeatureNode(id, v);
+                        j++;
+                    }
                 }
+                double l = Linear.predict(model, fx);
+                r.add((int) Math.round(l));
             }
-            double l = Linear.predict(model, fx);
-            r.add((int) Math.round(l));
         }
         return r;
     }
@@ -621,6 +620,16 @@ public class CoTraining {
      * @param predicted
      */
     public void computeMetrics(List<Integer> labels, List<Integer> predicted) {
+        // remove no predicted instances
+        int rn = 0;
+        for (int i = predicted.size() - 1; i >= 0; i--) {
+            if (predicted.get(i) == null) {
+                predicted.remove(i);
+                labels.remove(i);
+                rn++;
+            }
+        }
+        LOG.log(Level.WARNING, "Removed {0} predictions.", rn);
         int[][] m = new int[2][2];
         for (int i = 0; i < labels.size(); i++) {
             m[labels.get(i)][predicted.get(i)]++;
@@ -644,7 +653,6 @@ public class CoTraining {
         System.out.println("F_M=" + F(p0, r0) / F(p1, r1));
         System.out.println("acc.=" + ((double) (m[0][0] + m[1][1]) / (double) (m[0][0] + m[0][1] + m[1][0] + m[1][1])));
     }
-    
 
     /**
      * @param args the command line arguments
@@ -667,7 +675,7 @@ public class CoTraining {
             Logger.getLogger(CoTraining.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
+
     /**
      *
      * @return
