@@ -8,25 +8,29 @@ In case you have a small number of annotated triples, you can exploit a self-tra
 
 WikiOIE is described in the following paper. Please, cite it if you use our framework.
 
-@inproceedings{cassottiIIR2021,<br>
-  title = {{Extracting Relations from Italian Wikipedia using Unsupervised Information Extraction}},<br>
-  author = {Cassotti, Pierluigi and Siciliani, Lucia and Basile, Pierpaolo and de Gemmis, Marco and Lops, Pasquale},<br>
-  editor = {Anelli, Vito Walter and Di Noia, Tommaso and Ferro, Nicola and Narducci, Fedelucio},<br>
-  booktitle = {Proceedings of the 11th Italian Information Retrieval Workshop 2021 (IIR 2021)},<br>
-  publisher = {CEUR-WS},<br>
-  year = {2021},<br>
-  note = {http://ceur-ws.org/Vol-2947/paper2.pdf}<br>
-}<br>
+```
+@inproceedings{cassottiIIR2021,
+  title = {{Extracting Relations from Italian Wikipedia using Unsupervised Information Extraction}},
+  author = {Cassotti, Pierluigi and Siciliani, Lucia and Basile, Pierpaolo and de Gemmis, Marco and Lops, Pasquale},
+  editor = {Anelli, Vito Walter and Di Noia, Tommaso and Ferro, Nicola and Narducci, Fedelucio},
+  booktitle = {Proceedings of the 11th Italian Information Retrieval Workshop 2021 (IIR 2021)},
+  publisher = {CEUR-WS},
+  year = {2021},
+  note = {http://ceur-ws.org/Vol-2947/paper2.pdf}
+}
+```
 
 While, the self-training stategy is described in the following paper:
 
-@inproceedings{sicilianiCLICit2021,<br>
-  title = {{Extracting Relations from Italian Wikipedia using Self-Training}},<br>
-  author = {Siciliani, Lucia and Cassotti, Pierluigi and Basile, Pierpaolo and de Gemmis, Marco and Lops, Pasquale and Semeraro, Giovanni},<br>
-  booktitle = {Eighth Italian Conference on Computational Linguistics (CLiC-it 2021},<br>
-  publisher = {CEUR-WS},<br>
-  year = {2021}<br>
-}<br>
+```
+@inproceedings{sicilianiCLICit2021,
+  title = {{Extracting Relations from Italian Wikipedia using Self-Training}},
+  author = {Siciliani, Lucia and Cassotti, Pierluigi and Basile, Pierpaolo and de Gemmis, Marco and Lops, Pasquale and Semeraro, Giovanni},
+  booktitle = {Eighth Italian Conference on Computational Linguistics (CLiC-it 2021},
+  publisher = {CEUR-WS},
+  year = {2021}
+}
+```
 
 Workflow
 -----------

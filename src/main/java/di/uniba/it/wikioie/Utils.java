@@ -255,6 +255,7 @@ public class Utils {
                 writer.write(line);
                 writer.newLine();
             }
+            r++;
         }
         reader.close();
         writer.close();
