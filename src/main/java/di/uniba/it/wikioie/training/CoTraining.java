@@ -161,7 +161,7 @@ public class CoTraining {
                     record.get("subject"),
                     record.get("predicate"),
                     record.get("object"),
-                    Float.parseFloat(record.get("score"))));
+                    record.isSet("score") ? Float.parseFloat(record.get("score")) : 0));
             id++;
         }
         return list;
