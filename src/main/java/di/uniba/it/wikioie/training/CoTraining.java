@@ -138,23 +138,12 @@ public class CoTraining {
     private List<FileInstance> loadUnlabelled(File inputFile) throws IOException {
         List<FileInstance> list = new ArrayList<>();
         Reader in = new FileReader(inputFile);
-        Iterable<CSVRecord> records = CSVFormat.TDF.withFirstRecordAsHeader().parse(in);
-        int id = 0;
-        for (CSVRecord record : records) {
-            list.add(new FileInstance(id, record.get("text"),
-                    record.get("subject"),
-                    record.get("predicate"),
-                    record.get("object"),
-                    Float.parseFloat(record.get("score"))));
-            id++;
+        Iterable<CSVRecord> records;
+        if (inputFile.getName().endsWith(".tsv")) {
+            records = CSVFormat.TDF.withFirstRecordAsHeader().parse(in);
+        } else {
+            records = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(in);
         }
-        return list;
-    }
-
-    private List<FileInstance> loadUnlabelledCSV(File inputFile) throws IOException {
-        List<FileInstance> list = new ArrayList<>();
-        Reader in = new FileReader(inputFile);
-        Iterable<CSVRecord> records = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(in);
         int id = 0;
         for (CSVRecord record : records) {
             list.add(new FileInstance(id, record.get("text"),
@@ -178,7 +167,12 @@ public class CoTraining {
     public TrainingSet generateFeatures(File inputFile, UDPParser parser, WikiExtractor extractor) throws IOException {
         Reader in = new FileReader(inputFile);
         TrainingSet tr = new TrainingSet();
-        Iterable<CSVRecord> records = CSVFormat.DEFAULT.withHeader(BootstrappingHeaders.class).withFirstRecordAsHeader().parse(in);
+        Iterable<CSVRecord> records;
+        if (inputFile.getName().endsWith(".tsv")) {
+            records = CSVFormat.TDF.withHeader(BootstrappingHeaders.class).withFirstRecordAsHeader().parse(in);
+        } else {
+            records = CSVFormat.DEFAULT.withHeader(BootstrappingHeaders.class).withFirstRecordAsHeader().parse(in);
+        }
         int id = 0;
         for (CSVRecord record : records) {
             String text = record.get(BootstrappingHeaders.text);
@@ -216,7 +210,12 @@ public class CoTraining {
     public List<Integer> loadLabels(File file) throws IOException {
         List<Integer> labels = new ArrayList<>();
         FileReader in = new FileReader(file);
-        Iterable<CSVRecord> records = CSVFormat.DEFAULT.withHeader(BootstrappingHeaders.class).withFirstRecordAsHeader().parse(in);
+        Iterable<CSVRecord> records;
+        if (file.getName().endsWith(".tsv")) {
+            records = CSVFormat.TDF.withHeader(BootstrappingHeaders.class).withFirstRecordAsHeader().parse(in);
+        } else {
+            records = CSVFormat.DEFAULT.withHeader(BootstrappingHeaders.class).withFirstRecordAsHeader().parse(in);
+        }
         for (CSVRecord record : records) {
             labels.add(Integer.parseInt(record.get(BootstrappingHeaders.label)));
         }
@@ -603,7 +602,7 @@ public class CoTraining {
         WikiExtractor ie = new WikiITSimpleDepExtractor();
         TrainingSet tr = generateFeatures(trainFile, parser, ie);
         Model model = train(tr, C);
-        List<FileInstance> unlabelled = loadUnlabelledCSV(testFile);
+        List<FileInstance> unlabelled = loadUnlabelled(testFile);
         List<Integer> labels = loadLabels(testFile);
         TrainingSet ts = generateTestFeatures(tr.getDict(), unlabelled, parser, ie);
         List<Integer> pred = test(model, ts);
@@ -662,8 +661,10 @@ public class CoTraining {
             CoTraining ct = new CoTraining();
             // set the learning algorithm
             ct.setSolver(SolverType.L2R_LR);
+            //ct.setSolver(SolverType.L2R_L2LOSS_SVC);
             // set the threshold used during self-training
             ct.setThPred(0.85);
+            //ct.setThPred(0.0);   // in case of SVC
             // start co-training. Paramters: annotated data, unlabelled data, unlabelled data added to each iteration, max iterations, C
             ct.cotraining(new File("resources/bootstrapping/bootstrapping_train.csv"),
                     new File("resources/bootstrapping/triple_simpledep_text_20_01_dd.tsv"),
