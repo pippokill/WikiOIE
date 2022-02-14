@@ -66,7 +66,8 @@ public class Process {
                 .addOption(new Option("o", true, "Output directory"))
                 .addOption(new Option("p", true, "Processing class"))
                 .addOption(new Option("t", true, "Training file (optional)"))
-                .addOption(new Option("c", true, "C value (optional, default=1)"));
+                .addOption(new Option("c", true, "C value (optional, default=1)"))
+                .addOption(new Option("s", true, "Solver (optional, L2R for logistic regression, SVC for support-vector classifier, default=L2R)"));
         try {
             DefaultParser parser = new DefaultParser();
             CommandLine cmd = parser.parse(options, args);
@@ -75,7 +76,9 @@ public class Process {
                 PassageProcessor processor = null;
                 try {
                     if (cmd.hasOption("t")) {
-                        processor = (PassageProcessor) ClassLoader.getSystemClassLoader().loadClass("di.uniba.it.wikioie.indexing.post." + cmd.getOptionValue("p")).getDeclaredConstructor(File.class, Double.class).newInstance(new File(cmd.getOptionValue("t")), Double.parseDouble(cmd.getOptionValue("c", "1")));
+                        processor = (PassageProcessor) ClassLoader.getSystemClassLoader().loadClass("di.uniba.it.wikioie.indexing.post." + cmd.getOptionValue("p"))
+                                .getDeclaredConstructor(File.class, Double.class)
+                                .newInstance(new File(cmd.getOptionValue("t")), Double.parseDouble(cmd.getOptionValue("c", "1")), cmd.getOptionValue("s", "L2R"));
                     } else {
                         processor = (PassageProcessor) ClassLoader.getSystemClassLoader().loadClass("di.uniba.it.wikioie.indexing.post." + cmd.getOptionValue("p")).getDeclaredConstructor().newInstance();
                     }
@@ -95,5 +98,5 @@ public class Process {
             formatter.printHelp("WikiOIE Run indexing", options);
         }
     }
-
+    
 }

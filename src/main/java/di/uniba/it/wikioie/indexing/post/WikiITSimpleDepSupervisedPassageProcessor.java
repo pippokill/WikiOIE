@@ -78,7 +78,9 @@ public class WikiITSimpleDepSupervisedPassageProcessor implements PassageProcess
 
     private TrainingSet ts;
 
-    private UDPParser parser;
+    private final UDPParser parser;
+
+    private final String solvername;
 
     private final double C;
 
@@ -86,12 +88,14 @@ public class WikiITSimpleDepSupervisedPassageProcessor implements PassageProcess
      *
      * @param trainingfile
      * @param C
+     * @param solvername
      */
-    public WikiITSimpleDepSupervisedPassageProcessor(File trainingfile, Double C) {
+    public WikiITSimpleDepSupervisedPassageProcessor(File trainingfile, Double C, String solvername) {
         this.wie = new WikiITSimpleDepExtractor();
         this.trainingfile = trainingfile;
         this.parser = new UDPParser(Config.getInstance().getValue("udp.address"), Config.getInstance().getValue("udp.model"));
         this.C = C;
+        this.solvername = solvername;
     }
 
     /**
@@ -104,7 +108,13 @@ public class WikiITSimpleDepSupervisedPassageProcessor implements PassageProcess
         try {
             if (model == null) {
                 LOG.log(Level.INFO, "Load supervised model {0}", trainingfile);
-                tr.setSolver(SolverType.L2R_LR);
+                if (solvername.equalsIgnoreCase("SVC")) {
+                    LOG.info("Solver: SVC.");
+                    tr.setSolver(SolverType.L2R_L2LOSS_SVC);
+                } else {
+                    LOG.info("Solver: L2R.");
+                    tr.setSolver(SolverType.L2R_LR);
+                }
                 ts = tr.generateFeatures(trainingfile, parser, wie);
                 LOG.info("Training...");
                 model = tr.train(ts, C);
