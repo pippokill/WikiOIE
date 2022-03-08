@@ -649,7 +649,7 @@ public class CoTraining {
         System.out.println("R_1=" + r1);
         System.out.println("F_0=" + F(p0, r0));
         System.out.println("F_1=" + F(p1, r1));
-        System.out.println("F_M=" + F(p0, r0) / F(p1, r1));
+        System.out.println("F_M=" + (F(p0, r0) + F(p1, r1))/2);
         System.out.println("acc.=" + ((double) (m[0][0] + m[1][1]) / (double) (m[0][0] + m[0][1] + m[1][0] + m[1][1])));
     }
 
