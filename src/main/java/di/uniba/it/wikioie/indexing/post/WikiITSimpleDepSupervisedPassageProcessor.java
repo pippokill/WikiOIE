@@ -50,6 +50,7 @@ import di.uniba.it.wikioie.training.CoTraining;
 import di.uniba.it.wikioie.training.TrainingSet;
 import di.uniba.it.wikioie.udp.UDPParser;
 import di.uniba.it.wikioie.udp.UDPSentence;
+import di.uniba.it.wikioie.vectors.VectorReader;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -82,7 +83,25 @@ public class WikiITSimpleDepSupervisedPassageProcessor implements PassageProcess
 
     private final String solvername;
 
+    private final VectorReader vr;
+
     private final double C;
+
+    /**
+     *
+     * @param trainingfile
+     * @param C
+     * @param solvername
+     * @param vr
+     */
+    public WikiITSimpleDepSupervisedPassageProcessor(File trainingfile, Double C, String solvername, VectorReader vr) {
+        this.wie = new WikiITSimpleDepExtractor();
+        this.trainingfile = trainingfile;
+        this.parser = new UDPParser(Config.getInstance().getValue("udp.address"), Config.getInstance().getValue("udp.model"));
+        this.C = C;
+        this.solvername = solvername;
+        this.vr = vr;
+    }
 
     /**
      *
@@ -91,11 +110,7 @@ public class WikiITSimpleDepSupervisedPassageProcessor implements PassageProcess
      * @param solvername
      */
     public WikiITSimpleDepSupervisedPassageProcessor(File trainingfile, Double C, String solvername) {
-        this.wie = new WikiITSimpleDepExtractor();
-        this.trainingfile = trainingfile;
-        this.parser = new UDPParser(Config.getInstance().getValue("udp.address"), Config.getInstance().getValue("udp.model"));
-        this.C = C;
-        this.solvername = solvername;
+        this(trainingfile, C, solvername, null);
     }
 
     /**
@@ -115,7 +130,7 @@ public class WikiITSimpleDepSupervisedPassageProcessor implements PassageProcess
                     LOG.info("Solver: L2R.");
                     tr.setSolver(SolverType.L2R_LR);
                 }
-                ts = tr.generateFeatures(trainingfile, parser, wie);
+                ts = tr.generateFeatures(trainingfile, parser, wie, vr);
                 LOG.info("Training...");
                 model = tr.train(ts, C);
             }

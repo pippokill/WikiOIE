@@ -82,6 +82,11 @@
             <artifactId>liblinear</artifactId>
             <version>2.43</version>
         </dependency>
+        <dependency>
+            <groupId>net.sourceforge.parallelcolt</groupId>
+            <artifactId>parallelcolt</artifactId>
+            <version>0.10.1</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

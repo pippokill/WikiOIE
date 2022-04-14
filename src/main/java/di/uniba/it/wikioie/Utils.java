@@ -38,11 +38,11 @@ import di.uniba.it.wikioie.data.Pair;
 import di.uniba.it.wikioie.data.Span;
 import di.uniba.it.wikioie.data.Token;
 import di.uniba.it.wikioie.data.Triple;
-import di.uniba.it.wikioie.training.CoTraining;
 import di.uniba.it.wikioie.training.FileInstance;
-import di.uniba.it.wikioie.training.Instance;
-import di.uniba.it.wikioie.training.TrainingSet;
 import di.uniba.it.wikioie.udp.UDPSentence;
+import di.uniba.it.wikioie.vectors.Vector;
+import di.uniba.it.wikioie.vectors.VectorReader;
+import di.uniba.it.wikioie.vectors.utils.SpaceUtils;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -145,6 +145,22 @@ public class Utils {
             set.add(sentence.getTokens().get(i).getUpostag());
         }
         return new Pair(sb.toString(), set);
+    }
+
+    /**
+     *
+     * @param sentence
+     * @param span
+     * @param vr
+     * @return
+     * @throws IOException
+     */
+    public static Vector getVectorFeature(UDPSentence sentence, Span span, VectorReader vr) throws IOException {
+        Set<String> set = new HashSet<>();
+        for (int i = span.getStart(); i < span.getEnd(); i++) {
+            set.add(sentence.getTokens().get(i).getForm().toLowerCase());
+        }
+        return SpaceUtils.superposeVectors(vr, set.toArray(String[]::new));
     }
 
     /**

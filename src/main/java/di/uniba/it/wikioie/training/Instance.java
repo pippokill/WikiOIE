@@ -5,7 +5,10 @@
  */
 package di.uniba.it.wikioie.training;
 
+import di.uniba.it.wikioie.vectors.Vector;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -13,7 +16,7 @@ import java.util.Map;
  * @author pierpaolo
  */
 public class Instance {
-    
+
     private final int id;
 
     /**
@@ -23,11 +26,11 @@ public class Instance {
     public Instance(int id) {
         this.id = id;
     }
-    
-    
 
     private final Map<Integer, Float> features = new HashMap<>();
-    
+
+    private final List<Vector> denseFeatures = new ArrayList<>();
+
     private int label;
 
     /**
@@ -118,9 +121,21 @@ public class Instance {
     public int getId() {
         return id;
     }
-    
-    
-    
-    
+
+    /**
+     *
+     * @return
+     */
+    public List<Vector> getDenseFeature() {
+        return denseFeatures;
+    }
+
+    /**
+     *
+     * @param vector
+     */
+    public void addDenseVector(Vector vector) {
+        denseFeatures.add(vector);
+    }
 
 }

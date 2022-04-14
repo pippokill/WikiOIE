@@ -20,6 +20,7 @@ import di.uniba.it.wikioie.process.WikiExtractor;
 import di.uniba.it.wikioie.process.WikiITSimpleDepExtractor;
 import di.uniba.it.wikioie.udp.UDPParser;
 import di.uniba.it.wikioie.udp.UDPSentence;
+import di.uniba.it.wikioie.vectors.VectorReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
@@ -161,10 +162,11 @@ public class CoTraining {
      * @param inputFile
      * @param parser
      * @param extractor
+     * @param vr
      * @return
      * @throws IOException
      */
-    public TrainingSet generateFeatures(File inputFile, UDPParser parser, WikiExtractor extractor) throws IOException {
+    public TrainingSet generateFeatures(File inputFile, UDPParser parser, WikiExtractor extractor, VectorReader vr) throws IOException {
         Reader in = new FileReader(inputFile);
         TrainingSet tr = new TrainingSet();
         Iterable<CSVRecord> records;
@@ -192,6 +194,11 @@ public class CoTraining {
                 inst.setFeature(sid, pair.getB().getObject().getScore());
                 sid = tr.addFeature("t_score");
                 inst.setFeature(sid, pair.getB().getScore());
+                if (vr != null) {
+                    inst.addDenseVector(Utils.getVectorFeature(pair.getA(), pair.getB().getSubject(), vr));
+                    inst.addDenseVector(Utils.getVectorFeature(pair.getA(), pair.getB().getPredicate(), vr));
+                    inst.addDenseVector(Utils.getVectorFeature(pair.getA(), pair.getB().getObject(), vr));
+                }
                 inst.setLabel(Integer.parseInt(record.get(BootstrappingHeaders.label)));
                 tr.addInstance(inst);
             }
@@ -229,10 +236,11 @@ public class CoTraining {
      * @param ts
      * @param parser
      * @param extractor
+     * @param vr
      * @return
      * @throws IOException
      */
-    public TrainingSet generateTestFeatures(Map<String, Integer> map, List<FileInstance> ts, UDPParser parser, WikiExtractor extractor) throws IOException {
+    public TrainingSet generateTestFeatures(Map<String, Integer> map, List<FileInstance> ts, UDPParser parser, WikiExtractor extractor, VectorReader vr) throws IOException {
         TrainingSet tr = new TrainingSet(map);
         int id = 0;
         for (FileInstance finst : ts) {
@@ -256,6 +264,11 @@ public class CoTraining {
                 inst.setFeature(sid, pair.getB().getObject().getScore());
                 sid = tr.getId("t_score");
                 inst.setFeature(sid, pair.getB().getScore());
+                if (vr != null) {
+                    inst.addDenseVector(Utils.getVectorFeature(pair.getA(), pair.getB().getSubject(), vr));
+                    inst.addDenseVector(Utils.getVectorFeature(pair.getA(), pair.getB().getPredicate(), vr));
+                    inst.addDenseVector(Utils.getVectorFeature(pair.getA(), pair.getB().getObject(), vr));
+                }
                 tr.addInstance(inst);
             }
             id++;
@@ -503,12 +516,13 @@ public class CoTraining {
      * @param annotatedFile
      * @param dataFile
      * @param outputdir
+     * @param vr
      * @param p
      * @param maxit
      * @param C
      * @throws IOException
      */
-    public void cotraining(File annotatedFile, File dataFile, String outputdir, int p, int maxit, double C) throws IOException {
+    public void cotraining(File annotatedFile, File dataFile, String outputdir, VectorReader vr, int p, int maxit, double C) throws IOException {
         UDPParser parser = new UDPParser(Config.getInstance().getValue("udp.address"), Config.getInstance().getValue("udp.model"));
         WikiExtractor ie = new WikiITSimpleDepExtractor();
         List<FileInstance> unlabelled = loadUnlabelled(dataFile);
@@ -523,7 +537,7 @@ public class CoTraining {
             // select p unlabelled data
             List<FileInstance> subList = unlabelled.subList(0, p);
             // build training
-            TrainingSet ts = generateFeatures(annotatedFile, parser, ie);
+            TrainingSet ts = generateFeatures(annotatedFile, parser, ie, vr);
             Utils.saveDict(ts.getDict(), new File(outputdir + "/tr_" + it + ".dict"));
             double bal = computeBalance(ts);
             System.out.println("Balance=" + bal);
@@ -534,9 +548,9 @@ public class CoTraining {
             // classify unlabeled data
             List<Pair<Integer, Integer>> r;
             if (thPred > 0) {
-                r = testWithProb(model, generateTestFeatures(ts.getDict(), subList, parser, ie));
+                r = testWithProb(model, generateTestFeatures(ts.getDict(), subList, parser, ie, vr));
             } else {
-                r = testWithoutProb(model, generateTestFeatures(ts.getDict(), subList, parser, ie));
+                r = testWithoutProb(model, generateTestFeatures(ts.getDict(), subList, parser, ie, vr));
             }
             balance(r, bal);
             LOG.log(Level.INFO, "New examples {0}", r.size());
@@ -576,18 +590,35 @@ public class CoTraining {
     /**
      *
      * @param annotatedFile
-     * @param k
+     * @param dataFile
+     * @param outputdir
+     * @param p
+     * @param maxit
      * @param C
      * @throws IOException
      */
-    @Deprecated
-    public void kfold(File annotatedFile, int k, double C) throws IOException {
+    public void cotraining(File annotatedFile, File dataFile, String outputdir, int p, int maxit, double C) throws IOException {
+        cotraining(annotatedFile, dataFile, outputdir, null, p, maxit, C);
+    }
+
+    /**
+     *
+     * @param trainFile
+     * @param testFile
+     * @param vr
+     * @param C
+     * @throws IOException
+     */
+    public void trainAndTest(File trainFile, File testFile, VectorReader vr, double C) throws IOException {
         UDPParser parser = new UDPParser(Config.getInstance().getValue("udp.address"), Config.getInstance().getValue("udp.model"));
         WikiExtractor ie = new WikiITSimpleDepExtractor();
-        TrainingSet tr = generateFeatures(annotatedFile, parser, ie);
-        LOG.info("Training (k-fold)...");
-        // kfold
-        kfold(tr, k, C);
+        TrainingSet tr = generateFeatures(trainFile, parser, ie, vr);
+        Model model = train(tr, C);
+        List<FileInstance> unlabelled = loadUnlabelled(testFile);
+        List<Integer> labels = loadLabels(testFile);
+        TrainingSet ts = generateTestFeatures(tr.getDict(), unlabelled, parser, ie, vr);
+        List<Integer> pred = test(model, ts);
+        computeMetrics(labels, pred);
     }
 
     /**
@@ -598,15 +629,7 @@ public class CoTraining {
      * @throws IOException
      */
     public void trainAndTest(File trainFile, File testFile, double C) throws IOException {
-        UDPParser parser = new UDPParser(Config.getInstance().getValue("udp.address"), Config.getInstance().getValue("udp.model"));
-        WikiExtractor ie = new WikiITSimpleDepExtractor();
-        TrainingSet tr = generateFeatures(trainFile, parser, ie);
-        Model model = train(tr, C);
-        List<FileInstance> unlabelled = loadUnlabelled(testFile);
-        List<Integer> labels = loadLabels(testFile);
-        TrainingSet ts = generateTestFeatures(tr.getDict(), unlabelled, parser, ie);
-        List<Integer> pred = test(model, ts);
-        computeMetrics(labels, pred);
+        trainAndTest(trainFile, testFile, null, C);
     }
 
     private double F(double P, double R) {
@@ -649,7 +672,7 @@ public class CoTraining {
         System.out.println("R_1=" + r1);
         System.out.println("F_0=" + F(p0, r0));
         System.out.println("F_1=" + F(p1, r1));
-        System.out.println("F_M=" + (F(p0, r0) + F(p1, r1))/2);
+        System.out.println("F_M=" + (F(p0, r0) + F(p1, r1)) / 2);
         System.out.println("acc.=" + ((double) (m[0][0] + m[1][1]) / (double) (m[0][0] + m[0][1] + m[1][0] + m[1][1])));
     }
 
