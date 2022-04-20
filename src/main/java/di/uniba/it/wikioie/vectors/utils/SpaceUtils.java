@@ -409,13 +409,13 @@ public class SpaceUtils {
      */
     public static Vector superposeVectors(VectorReader vr, Vector... vectors) {
         if (vectors.length == 0) {
-            return null;
+            return VectorFactory.createZeroVector(VectorType.REAL, vr.getDimension());
         } else {
-            Vector s = VectorFactory.createZeroVector(vectors[0].getVectorType(), vectors[0].getDimension());
+            Vector s = VectorFactory.createZeroVector(VectorType.REAL, vr.getDimension());
             for (Vector v : vectors) {
                 s.superpose(v, 1, null);
             }
-            Vector r = VectorFactory.createZeroVector(vectors[0].getVectorType(), vectors[0].getDimension());
+            Vector r = VectorFactory.createZeroVector(VectorType.REAL, vr.getDimension());
             r.superpose(s, 1 / (double) vectors.length, null);
             return r;
         }

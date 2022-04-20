@@ -5,6 +5,7 @@
  */
 package di.uniba.it.wikioie.training;
 
+import di.uniba.it.wikioie.vectors.Vector;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -83,6 +84,19 @@ public class TrainingSet {
      */
     public Integer getId(String fvalue) {
         return dict.get(fvalue);
+    }
+
+    public int denseSize() {
+        int size = 0;
+        if (!set.isEmpty()) {
+            Instance inst = set.get(0);
+            if (inst.getDenseFeature() != null) {
+                for (Vector v : inst.getDenseFeature()) {
+                    size += v.getDimension();
+                }
+            }
+        }
+        return size;
     }
 
 }

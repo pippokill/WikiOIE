@@ -20,7 +20,10 @@ import di.uniba.it.wikioie.process.WikiExtractor;
 import di.uniba.it.wikioie.process.WikiITSimpleDepExtractor;
 import di.uniba.it.wikioie.udp.UDPParser;
 import di.uniba.it.wikioie.udp.UDPSentence;
+import di.uniba.it.wikioie.vectors.RealVector;
+import di.uniba.it.wikioie.vectors.Vector;
 import di.uniba.it.wikioie.vectors.VectorReader;
+import di.uniba.it.wikioie.vectors.lucene.LuceneVectorReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
@@ -311,18 +314,27 @@ public class CoTraining {
         Collections.sort(ids);
         Problem problem = new Problem();
         problem.l = ts.getSet().size();
-        problem.n = ts.getDict().size();
+        problem.n = ts.getDict().size() + ts.denseSize();
         Feature[][] x = new Feature[problem.l][];
         double[] y = new double[problem.l];
         for (int k = 0; k < ts.getSet().size(); k++) {
             Instance inst = ts.getSet().get(k);
-            x[k] = new Feature[inst.getFeatures().size()];
+            x[k] = new Feature[inst.getFeatures().size() + ts.denseSize()];
             int j = 0;
             for (Integer id : ids) {
                 float v = inst.getFeature(id);
                 if (v != 0) {
                     x[k][j] = new FeatureNode(id, v);
                     j++;
+                }
+            }
+            j = inst.getFeatures().size();
+            int did = ids.size() + 1;
+            for (Vector v : inst.getDenseFeature()) {
+                for (float c : ((RealVector) v).getCoordinates()) {
+                    x[k][j] = new FeatureNode(did, c);
+                    j++;
+                    did++;
                 }
             }
             y[k] = inst.getLabel();
@@ -392,13 +404,22 @@ public class CoTraining {
         Collections.sort(ids);
         for (int k = 0; k < ts.getSet().size(); k++) {
             Instance inst = ts.getSet().get(k);
-            Feature[] fx = new Feature[inst.getFeatures().size()];
+            Feature[] fx = new Feature[inst.getFeatures().size() + ts.denseSize()];
             int j = 0;
             for (Integer id : ids) {
                 float v = inst.getFeature(id);
                 if (v != 0) {
                     fx[j] = new FeatureNode(id, v);
                     j++;
+                }
+            }
+            j = inst.getFeatures().size();
+            int did = ids.size() + 1;
+            for (Vector v : inst.getDenseFeature()) {
+                for (float c : ((RealVector) v).getCoordinates()) {
+                    fx[j] = new FeatureNode(did, c);
+                    j++;
+                    did++;
                 }
             }
             double[] prob = new double[2];
@@ -426,13 +447,22 @@ public class CoTraining {
             if (inst.getFeatures().isEmpty()) {
                 r.add(null);
             } else {
-                Feature[] fx = new Feature[inst.getFeatures().size()];
+                Feature[] fx = new Feature[inst.getFeatures().size() + ts.denseSize()];
                 int j = 0;
                 for (Integer id : ids) {
                     float v = inst.getFeature(id);
                     if (v != 0) {
                         fx[j] = new FeatureNode(id, v);
                         j++;
+                    }
+                }
+                j = inst.getFeatures().size();
+                int did = ids.size() + 1;
+                for (Vector v : inst.getDenseFeature()) {
+                    for (float c : ((RealVector) v).getCoordinates()) {
+                        fx[j] = new FeatureNode(did, c);
+                        j++;
+                        did++;
                     }
                 }
                 double l = Linear.predict(model, fx);
@@ -454,13 +484,22 @@ public class CoTraining {
         Collections.sort(ids);
         for (int k = 0; k < ts.getSet().size(); k++) {
             Instance inst = ts.getSet().get(k);
-            Feature[] fx = new Feature[inst.getFeatures().size()];
+            Feature[] fx = new Feature[inst.getFeatures().size() + ts.denseSize()];
             int j = 0;
             for (Integer id : ids) {
                 float v = inst.getFeature(id);
                 if (v != 0) {
                     fx[j] = new FeatureNode(id, v);
                     j++;
+                }
+            }
+            j = inst.getFeatures().size();
+            int did = ids.size() + 1;
+            for (Vector v : inst.getDenseFeature()) {
+                for (float c : ((RealVector) v).getCoordinates()) {
+                    fx[j] = new FeatureNode(did, c);
+                    j++;
+                    did++;
                 }
             }
             double l = Linear.predict(model, fx);
@@ -682,19 +721,26 @@ public class CoTraining {
     public static void main(String[] args) {
         try {
             CoTraining ct = new CoTraining();
+            // init VectorReader
+            VectorReader vr = new LuceneVectorReader(new File("/home/pierpaolo/data/fasttext/cc.it.300.vec.index"));
+            vr.init();
             // set the learning algorithm
-            ct.setSolver(SolverType.L2R_LR);
-            //ct.setSolver(SolverType.L2R_L2LOSS_SVC);
+            //ct.setSolver(SolverType.L2R_LR);
+            ct.setSolver(SolverType.L2R_L2LOSS_SVC);
             // set the threshold used during self-training
             ct.setThPred(0.85);
             //ct.setThPred(0.0);   // in case of SVC
             // start co-training. Paramters: annotated data, unlabelled data, unlabelled data added to each iteration, max iterations, C
-            ct.cotraining(new File("resources/bootstrapping/bootstrapping_train.csv"),
+            /*ct.cotraining(new File("resources/bootstrapping/bootstrapping_train.csv"),
                     new File("resources/bootstrapping/triple_simpledep_text_20_01_dd.tsv"),
                     "resources/bootstrapping/new_reg/",
-                    1000, 20, 10);
+                    1000, 20, 10);*/
             // evaluate the training set obtained by the self-training
-            ct.trainAndTest(new File("resources/bootstrapping/new_reg/tr_19"), new File("resources/bootstrapping/bootstrapping_test.csv"), 10);
+            //ct.trainAndTest(new File("resources/bootstrapping/new_reg/tr_19"), new File("resources/bootstrapping/bootstrapping_test.csv"), 10);
+
+            ct.trainAndTest(new File("/home/pierpaolo/Scaricati/temp/siap/oie/OIE/training_set.tsv"),
+                    new File("/home/pierpaolo/Scaricati/temp/siap/oie/OIE/test_set.tsv"),
+                    vr, 2);
         } catch (IOException ex) {
             Logger.getLogger(CoTraining.class.getName()).log(Level.SEVERE, null, ex);
         }
