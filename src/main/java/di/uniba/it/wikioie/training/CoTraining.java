@@ -596,7 +596,7 @@ public class CoTraining {
             CSVPrinter printer = CSVFormat.DEFAULT.print(writer);
             for (Pair<Integer, Integer> o : r) {
                 FileInstance fi = unlabelled.get(o.getA());
-                printer.printRecord("no title", fi.getText(), fi.getScore(), fi.getSubject(), fi.getPredicate(), fi.getObject(), o.getB().toString());
+                printer.printRecord("no title", fi.getText(), fi.getSubject(), fi.getPredicate(), fi.getObject(), o.getB().toString());
             }
             writer.close();
             annotatedFile = newFile;
