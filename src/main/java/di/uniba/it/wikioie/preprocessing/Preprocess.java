@@ -28,6 +28,10 @@ import org.apache.tika.parser.ocr.TesseractOCRParser;
 import org.apache.tika.parser.pdf.PDFParserConfig;
 import org.xml.sax.SAXException;
 
+/**
+ *
+ * @author pierpaolo
+ */
 public class Preprocess {
 
     private static final BlockingQueue<PreFile> in = new ArrayBlockingQueue(10000);
@@ -37,6 +41,9 @@ public class Preprocess {
     private static int outputDocCount;
     private static final Logger LOG = Logger.getLogger(Preprocess.class.getName());
 
+    /**
+     *
+     */
     public Preprocess() {
     }
 
@@ -127,6 +134,13 @@ public class Preprocess {
         LOG.log(Level.INFO, "Processed file count: {0}", outputDocCount);
     }
 
+    /**
+     *
+     * @param args
+     * @throws IOException
+     * @throws TikaException
+     * @throws SAXException
+     */
     public static void main(String[] args) throws IOException, TikaException, SAXException {
         System.setProperty("java.util.logging.SimpleFormatter.format",
                 "%4$s: %5$s [%1$tc]%n");

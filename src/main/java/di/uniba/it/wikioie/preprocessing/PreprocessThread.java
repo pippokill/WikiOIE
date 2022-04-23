@@ -28,6 +28,14 @@ public class PreprocessThread extends Thread {
     private final ParseContext context;
     private static final Logger LOG = Logger.getLogger(PreprocessThread.class.getName());
 
+    /**
+     *
+     * @param in
+     * @param outputPath
+     * @param autoParser
+     * @param metadata
+     * @param context
+     */
     public PreprocessThread(BlockingQueue<PreFile> in, String outputPath, AutoDetectParser autoParser, Metadata metadata, ParseContext context) {
         this.in = in;
         this.outputPath = outputPath;

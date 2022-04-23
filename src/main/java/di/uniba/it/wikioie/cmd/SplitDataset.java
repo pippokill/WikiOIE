@@ -10,8 +10,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * SplitDataset class split a starting dataset in training and test set, respecting given sampling and relevant
- * triples percentage.
+ * SplitDataset class split a starting dataset in training and test set,
+ * respecting given sampling and relevant triples percentage.
  *
  * @author angel
  */
@@ -23,12 +23,17 @@ public class SplitDataset {
     private String outputPath = "";
     private int triplesCount = 0;
     private static final Logger LOG = Logger.getLogger(CreateDataset.class.getName());
-    private static final String trLog = "[TRAINING SET]";
-    private static final String teLog = "[TEST SET]";
+    private static final String TR_LOG = "[TRAINING SET]";
+    private static final String TS_LOG = "[TEST SET]";
 
+    /**
+     *
+     * @param percentage
+     * @param path
+     */
     public SplitDataset(double percentage, String path) {
-        relevant = new HashSet<String>();
-        notRelevant = new HashSet<String>();
+        relevant = new HashSet<>();
+        notRelevant = new HashSet<>();
         relevantPercentage = percentage;
         outputPath = path;
     }
@@ -36,6 +41,7 @@ public class SplitDataset {
     /**
      * Splits evaluated triples in sets of relevant and non-relevant triples.
      * HashSet structure assures the absence of duplicate triples.
+     *
      * @param triples .tsv file containing evaluated triples.
      * @throws IOException
      */
@@ -44,24 +50,25 @@ public class SplitDataset {
         String r = "1";
         String nr = "0";
         String line;
-        while(reader.ready()) {
+        while (reader.ready()) {
             line = reader.readLine();
-            if(line.endsWith(r)) {
+            if (line.endsWith(r)) {
                 relevant.add(line);
-            } else if(line.endsWith(nr)) {
+            } else if (line.endsWith(nr)) {
                 notRelevant.add(line);
             }
         }
         reader.close();
         triplesCount = relevant.size() + notRelevant.size();
-        LOG.log(Level.INFO, "Starting with " + triplesCount + " triples");
-        LOG.log(Level.INFO, relevant.size() + " relevant triples");
-        LOG.log(Level.INFO, notRelevant.size() + " non-relevant triples");
+        LOG.log(Level.INFO, "Starting with {0} triples", triplesCount);
+        LOG.log(Level.INFO, "{0} relevant triples", relevant.size());
+        LOG.log(Level.INFO, "{0} non-relevant triples", notRelevant.size());
         removeDuplicates(triples);
     }
 
     /**
      * Removes possible duplicate triples from the initial dataset.
+     *
      * @param triples
      * @throws IOException
      */
@@ -70,11 +77,11 @@ public class SplitDataset {
         FileWriter writer = new FileWriter(triples_dd);
         BufferedWriter buff = new BufferedWriter(writer);
         CSVPrinter csv = CSVFormat.TDF.withHeader("title", "text", "subject", "predicate", "object", "ann.").print(buff);
-        for(String line: relevant) {
+        for (String line : relevant) {
             buff.write(line);
             buff.newLine();
         }
-        for(String line: notRelevant) {
+        for (String line : notRelevant) {
             buff.write(line);
             buff.newLine();
         }
@@ -84,7 +91,9 @@ public class SplitDataset {
     }
 
     /**
-     * Creates a set with given sampling percentage. Every taken triple is removed from its set.
+     * Creates a set with given sampling percentage. Every taken triple is
+     * removed from its set.
+     *
      * @param sampling
      * @throws IOException
      */
@@ -92,43 +101,43 @@ public class SplitDataset {
         double size = triplesCount * sampling; //size of entire set
         int rSize = (int) (size * relevantPercentage); //number of relevant triples in set
         int nrSize = (int) size - rSize; //number of non-relevant triples in set
-        LOG.log(Level.INFO, log + " " + rSize + " relevant triples, " + nrSize + " non-relevant triples");
+        LOG.log(Level.INFO, "{0} {1} relevant triples, {2} non-relevant triples", new Object[]{log, rSize, nrSize});
 
         File dir = new File(outputPath + dirName);
-        if(dir.mkdirs()) {
+        if (dir.mkdirs()) {
             File r = new File(dir.getAbsolutePath() + fileName);
             FileWriter writer = new FileWriter(r);
             BufferedWriter buff = new BufferedWriter(writer);
             CSVPrinter csv = CSVFormat.TDF.withHeader("title", "text", "subject", "predicate", "object", "label").print(buff);
 
             Iterator<String> rIter = relevant.iterator();
-            for(int i=0; i<rSize; i++) {
-                if(rIter.hasNext()) {
-                    String line = rIter.next().toString();
+            for (int i = 0; i < rSize; i++) {
+                if (rIter.hasNext()) {
+                    String line = rIter.next();
                     buff.write(line);
                     buff.newLine();
                     rIter.remove();
                 } else {
-                    LOG.log(Level.WARNING, log + " Relevant set is empty");
+                    LOG.log(Level.WARNING, "{0} Relevant set is empty", log);
                 }
             }
 
             Iterator<String> nrIter = notRelevant.iterator();
-            for(int i=0; i<nrSize; i++) {
-                if(nrIter.hasNext()) {
-                    String line = nrIter.next().toString();
+            for (int i = 0; i < nrSize; i++) {
+                if (nrIter.hasNext()) {
+                    String line = nrIter.next();
                     buff.write(line);
                     buff.newLine();
                     nrIter.remove();
                 } else {
-                    LOG.log(Level.WARNING, log + " Non-relevant set is empty");
+                    LOG.log(Level.WARNING, "{0} Non-relevant set is empty", log);
                 }
             }
             csv.close();
             buff.close();
             writer.close();
-            LOG.log(Level.INFO, relevant.size() + " relevant triples remaining");
-            LOG.log(Level.INFO, notRelevant.size() + " non-relevant triples remaining");
+            LOG.log(Level.INFO, "{0} relevant triples remaining", relevant.size());
+            LOG.log(Level.INFO, "{0} non-relevant triples remaining", notRelevant.size());
         }
     }
 
@@ -160,11 +169,11 @@ public class SplitDataset {
                 LOG.log(Level.INFO, "Creating training set...");
                 String dirName = "/training";
                 String fileName = "/training_set.tsv";
-                splitter.createSet(trainingSampling, trLog, dirName, fileName);
+                splitter.createSet(trainingSampling, TR_LOG, dirName, fileName);
                 LOG.log(Level.INFO, "Creating test set...");
                 dirName = "/test";
                 fileName = "/test_set.tsv";
-                splitter.createSet(testSampling, teLog, dirName, fileName);
+                splitter.createSet(testSampling, TS_LOG, dirName, fileName);
                 LOG.log(Level.INFO, "Closing...");
             }
         } catch (ParseException | IOException e) {
