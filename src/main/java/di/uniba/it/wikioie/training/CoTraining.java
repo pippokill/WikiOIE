@@ -67,6 +67,7 @@ public class CoTraining {
          *
          */
         text,
+        score,
         /**
          *
          */
@@ -146,11 +147,11 @@ public class CoTraining {
         }
         int id = 0;
         for (CSVRecord record : records) {
-            list.add(new FileInstance(id, record.get("text"),
-                    record.get("subject"),
-                    record.get("predicate"),
-                    record.get("object"),
-                    record.isSet("score") ? Float.parseFloat(record.get("score")) : 0));
+            list.add(new FileInstance(id, record.get(BootstrappingHeaders.text),
+                    record.get(BootstrappingHeaders.subject),
+                    record.get(BootstrappingHeaders.predicate),
+                    record.get(BootstrappingHeaders.object),
+                    record.isSet(BootstrappingHeaders.score.toString()) ? Float.parseFloat(record.get(BootstrappingHeaders.score)) : 0));
             id++;
         }
         return list;
@@ -170,9 +171,9 @@ public class CoTraining {
         TrainingSet tr = new TrainingSet();
         Iterable<CSVRecord> records;
         if (inputFile.getName().endsWith(".tsv")) {
-            records = CSVFormat.TDF.withHeader(BootstrappingHeaders.class).withFirstRecordAsHeader().parse(in);
+            records = CSVFormat.TDF.withFirstRecordAsHeader().parse(in);
         } else {
-            records = CSVFormat.DEFAULT.withHeader(BootstrappingHeaders.class).withFirstRecordAsHeader().parse(in);
+            records = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(in);
         }
         int id = 0;
         for (CSVRecord record : records) {
@@ -218,9 +219,9 @@ public class CoTraining {
         FileReader in = new FileReader(file);
         Iterable<CSVRecord> records;
         if (file.getName().endsWith(".tsv")) {
-            records = CSVFormat.TDF.withHeader(BootstrappingHeaders.class).withFirstRecordAsHeader().parse(in);
+            records = CSVFormat.TDF.withFirstRecordAsHeader().parse(in);
         } else {
-            records = CSVFormat.DEFAULT.withHeader(BootstrappingHeaders.class).withFirstRecordAsHeader().parse(in);
+            records = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(in);
         }
         for (CSVRecord record : records) {
             labels.add(Integer.parseInt(record.get(BootstrappingHeaders.label)));
@@ -736,7 +737,7 @@ public class CoTraining {
 
             ct.trainAndTest(new File("/home/pierpaolo/Scaricati/temp/siap/oie/OIE/training_set.tsv"),
                     new File("/home/pierpaolo/Scaricati/temp/siap/oie/OIE/test_set.tsv"),
-                    vr, 2);
+                    vr, 1);
         } catch (IOException ex) {
             Logger.getLogger(CoTraining.class.getName()).log(Level.SEVERE, null, ex);
         }
