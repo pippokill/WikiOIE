@@ -60,7 +60,6 @@ public class ObjectVector implements Comparable<ObjectVector> {
 
     /**
      *
-     * @param string
      * @param key
      * @param vector
      */
@@ -71,7 +70,6 @@ public class ObjectVector implements Comparable<ObjectVector> {
 
     /**
      *
-     * @param string
      * @param key
      * @param vector
      * @param score

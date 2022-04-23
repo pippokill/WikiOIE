@@ -86,6 +86,10 @@ public class TrainingSet {
         return dict.get(fvalue);
     }
 
+    /**
+     *
+     * @return
+     */
     public int denseSize() {
         int size = 0;
         if (!set.isEmpty()) {
