@@ -226,7 +226,7 @@ public class Utils {
      */
     public static void removeDuplicate(File bootfile, File datafile, File outfile) throws IOException {
         Reader in = new FileReader(bootfile);
-        Iterable<CSVRecord> records = CSVFormat.TDF.withFirstRecordAsHeader().parse(in);
+        Iterable<CSVRecord> records = CSVFormat.TDF.withFirstRecordAsHeader().withQuote(null).parse(in);
         Map<String, List<FileInstance>> bootins = new HashMap<>();
         int id = 0;
         for (CSVRecord record : records) {
@@ -244,7 +244,7 @@ public class Utils {
 
         Set<Integer> ids = new HashSet<>();
         in = new FileReader(datafile);
-        records = CSVFormat.TDF.withFirstRecordAsHeader().parse(in);
+        records = CSVFormat.TDF.withFirstRecordAsHeader().withQuote(null).parse(in);
         int r = 1; // first line is the header!!!
         for (CSVRecord record : records) {
             List<FileInstance> l = bootins.get(record.get("title"));
