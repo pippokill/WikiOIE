@@ -152,11 +152,11 @@ public class CoTraining {
         String firstWord = subjSplit[0];
         List<Token> tokens = udp.getTokens();
         int firstWordIndex = sentence.indexOf(firstWord);
-        int end = 1; //end of the new span
+        int end = 1;
         int start = 1;
         for (Token t : tokens) {
             if (t.getForm().equals(firstWord)) {
-                end = t.getId(); //start of the new span
+                end = t.getId(); //end of the new span
             }
         }
 
