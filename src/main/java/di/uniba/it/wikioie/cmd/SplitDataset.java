@@ -76,7 +76,7 @@ public class SplitDataset {
         File triples_dd = new File(triples.getAbsolutePath() + "/l_triples_dd.tsv");
         FileWriter writer = new FileWriter(triples_dd);
         BufferedWriter buff = new BufferedWriter(writer);
-        CSVPrinter csv = CSVFormat.TDF.withHeader("title", "text", "subject", "predicate", "object", "ann.").print(buff);
+        CSVPrinter csv = CSVFormat.TDF.withHeader("title", "text", "subject", "predicate", "object", "label").print(buff);
         for (String line : relevant) {
             buff.write(line);
             buff.newLine();
