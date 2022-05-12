@@ -13,9 +13,7 @@ import de.bwaldvogel.liblinear.Parameter;
 import de.bwaldvogel.liblinear.Problem;
 import de.bwaldvogel.liblinear.SolverType;
 import di.uniba.it.wikioie.Utils;
-import di.uniba.it.wikioie.data.Config;
-import di.uniba.it.wikioie.data.Pair;
-import di.uniba.it.wikioie.data.Triple;
+import di.uniba.it.wikioie.data.*;
 import di.uniba.it.wikioie.process.WikiExtractor;
 import di.uniba.it.wikioie.process.WikiITSimpleDepExtractor;
 import di.uniba.it.wikioie.udp.UDPParser;
@@ -38,6 +36,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.lang.String;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
@@ -111,32 +110,105 @@ public class CoTraining {
     public Set<String> generateFeatureSet(Pair<UDPSentence, Triple> pair) {
         Set<String> set = new HashSet<>();
         Triple triple = pair.getB();
+        //PoS-tags into the subject
         Pair<String, Set<String>> pf = Utils.getPosFeature(pair.getA(), triple.getSubject());
         set.add("pos_subj" + pf.getA());
         for (String pos : pf.getB()) {
             set.add("pos_subj_t_" + pos);
         }
+        //PoS-tags into the predicate
         pf = Utils.getPosFeature(pair.getA(), triple.getPredicate());
         set.add("pos_pred" + pf.getA());
         for (String pos : pf.getB()) {
             set.add("pos_pred_t_" + pos);
         }
+        //PoS-tags into the object
         pf = Utils.getPosFeature(pair.getA(), triple.getObject());
         set.add("pos_obj" + pf.getA());
         for (String pos : pf.getB()) {
             set.add("pos_obj_t_" + pos);
         }
-
+        //n-gram of the predicate
         set.add("pred_span_" + triple.getPredicate().getSpan().toLowerCase());
-
+        //set of dependencies between subject and predicate
         Set<String> dependencies = Utils.getDependencies(pair.getA(), pair.getB().getSubject(), pair.getB().getPredicate());
         for (String f : dependencies) {
             set.add("S_" + f);
         }
+        //set of dependencies between object and predicate
         dependencies = Utils.getDependencies(pair.getA(), pair.getB().getObject(), pair.getB().getPredicate());
         for (String f : dependencies) {
             set.add("O_" + f);
         }
+        //PoS-tags into the sequence before the subject
+        UDPSentence udp = pair.getA();
+        String sentence = udp.getText();
+        System.out.println("-----------------------------------------------------------------------");
+        System.out.println(sentence);
+
+        Span subjSpan = triple.getSubject();
+        String subjText = subjSpan.getSpan();
+        String[] subjSplit = subjText.split(" ");
+        String firstWord = subjSplit[0];
+        List<Token> tokens = udp.getTokens();
+        int firstWordIndex = sentence.indexOf(firstWord);
+        int end = 1; //end of the new span
+        int start = 1;
+        for (Token t : tokens) {
+            if (t.getForm().equals(firstWord)) {
+                end = t.getId(); //start of the new span
+            }
+        }
+
+        System.out.println("Sogg: " + subjSpan + "\n" + "Start: " + firstWordIndex + "\n" + "len: " + sentence.length());
+        System.out.println(udp.getTokens());
+
+        Span pre_subj;
+        if (firstWordIndex == -1) {
+            sentence = " ";
+        } else {
+            sentence = sentence.substring(0, firstWordIndex); //remaining sentence before the subject
+        }
+        pre_subj = new Span(sentence, start, end); //new span
+        System.out.println("nuovo span: " + pre_subj);
+        pf = Utils.getPosFeature(pair.getA(), pre_subj);
+        set.add("pre_subj" + sentence);
+        for (String pos : pf.getB()) {
+            set.add("pre_subj_t_" + pos);
+        }
+        //PoS-tags into the sequence after the object
+        sentence = udp.getText();
+        System.out.println("-----------------------------------------------------------------------");
+
+        Span objSpan = triple.getObject();
+        String objText = objSpan.getSpan();
+        String[] objSplit = objText.split(" ");
+        String lastWord = objSplit[objSplit.length-1];
+        tokens = udp.getTokens();
+        int sentenceLen = sentence.length();
+        int lastWordIndex = sentenceLen;
+        end = tokens.get(tokens.size()-1).getId(); //end of the new span
+        start = 1;
+        for (Token t : tokens) {
+            if (t.getForm().equals(lastWord)) {
+                    lastWordIndex = t.getEnd(); //for the substring
+                    start = t.getId(); //start of the new span
+            }
+        }
+
+        System.out.println("Ogg: " + objSpan + "\n" + "End: " + lastWordIndex + "\n" + "len: " + sentence.length());
+        System.out.println(udp.getTokens());
+
+        Span post_obj;
+        sentence = sentence.substring(lastWordIndex); //remaining sentence after the object
+        post_obj = new Span(sentence, start, end); //new span
+        System.out.println("nuovo span: " + post_obj);
+        pf = Utils.getPosFeature(pair.getA(), post_obj);
+        set.add("post_obj" + sentence);
+        for (String pos : pf.getB()) {
+            set.add("post_obj_t_" + pos);
+        }
+
         return set;
     }
 
@@ -723,11 +795,11 @@ public class CoTraining {
         try {
             CoTraining ct = new CoTraining();
             // init VectorReader
-            VectorReader vr = new LuceneVectorReader(new File("/home/pierpaolo/data/fasttext/cc.it.300.vec.index"));
+            VectorReader vr = new LuceneVectorReader(new File("C:/Users/angel/Documents/OIE4PA/Vectors/cc.it.300.vec.index"));
             vr.init();
             // set the learning algorithm
             //ct.setSolver(SolverType.L2R_LR);
-            ct.setSolver(SolverType.L2R_L2LOSS_SVC);
+            ct.setSolver(SolverType.L2R_LR);
             // set the threshold used during self-training
             ct.setThPred(0.85);
             //ct.setThPred(0.0);   // in case of SVC
@@ -739,9 +811,9 @@ public class CoTraining {
             // evaluate the training set obtained by the self-training
             //ct.trainAndTest(new File("resources/bootstrapping/new_reg/tr_19"), new File("resources/bootstrapping/bootstrapping_test.csv"), 10);
 
-            ct.trainAndTest(new File("/home/pierpaolo/Scaricati/temp/siap/oie/OIE/training_set.tsv"),
-                    new File("/home/pierpaolo/Scaricati/temp/siap/oie/OIE/test_set.tsv"),
-                    vr, 1);
+            ct.trainAndTest(new File("C:/Users/angel/Documents/OIE4PA/dataset_prova/training/training_set.tsv"),
+                    new File("C:/Users/angel/Documents/OIE4PA/dataset_prova/test/test_set.tsv"),
+                    vr, 16);
         } catch (IOException ex) {
             Logger.getLogger(CoTraining.class.getName()).log(Level.SEVERE, null, ex);
         }
