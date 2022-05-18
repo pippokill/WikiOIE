@@ -20,7 +20,7 @@ public class SplitDataset {
     private final Set<String> relevant;
     private final Set<String> notRelevant;
     private double relevantPercentage = 0.0;
-    private String outputPath = "";
+    static private String outputPath = "";
     private int triplesCount = 0;
     private static final Logger LOG = Logger.getLogger(CreateDataset.class.getName());
     private static final String TR_LOG = "[TRAINING SET]";
@@ -53,10 +53,19 @@ public class SplitDataset {
         while (reader.ready()) {
             line = reader.readLine();
             if (line.endsWith(r)) {
-                relevant.add(line);
+                if (!relevant.contains(line)) {
+                    relevant.add(line);
+                } else {
+                    System.out.println(line);
+                }
             } else if (line.endsWith(nr)) {
-                notRelevant.add(line);
+                if (!notRelevant.contains(line)) {
+                    notRelevant.add(line);
+                } else {
+                    System.out.println(line);
+                }
             }
+
         }
         reader.close();
         triplesCount = relevant.size() + notRelevant.size();
@@ -73,7 +82,7 @@ public class SplitDataset {
      * @throws IOException
      */
     private void removeDuplicates(File triples) throws IOException {
-        File triples_dd = new File(triples.getAbsolutePath() + "/l_triples_dd.tsv");
+        File triples_dd = new File(SplitDataset.outputPath + "/l_triples_dd.tsv");
         FileWriter writer = new FileWriter(triples_dd);
         BufferedWriter buff = new BufferedWriter(writer);
         CSVPrinter csv = CSVFormat.TDF.withHeader("title", "text", "subject", "predicate", "object", "label").print(buff);
