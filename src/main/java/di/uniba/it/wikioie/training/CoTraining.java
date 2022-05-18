@@ -28,18 +28,15 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.lang.String;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
+
+import static java.lang.Math.abs;
 
 /**
  *
@@ -50,6 +47,8 @@ public class CoTraining {
     private double thPred = 0.85;
 
     private SolverType solver = SolverType.L2R_LR;
+
+    private int ngram = 0;
 
     private static final Logger LOG = Logger.getLogger(CoTraining.class.getName());
 
@@ -143,71 +142,69 @@ public class CoTraining {
         //PoS-tags into the sequence before the subject
         UDPSentence udp = pair.getA();
         String sentence = udp.getText();
+        Span subjSpan = triple.getSubject();
+        int subjStart = subjSpan.getStart();
+        List<Token> tokens = udp.getTokens();
+        List<Token> prevTokens;
+        String s = "";
+        if (ngram < subjStart) {
+            prevTokens = tokens.subList(subjStart-ngram, subjStart);
+        } else {
+            prevTokens = tokens.subList(0, subjStart);
+        }
+        for (Token t : prevTokens) {
+            s = s.concat(t.getForm() + " ");
+        }
         System.out.println("-----------------------------------------------------------------------");
         System.out.println(sentence);
-
-        Span subjSpan = triple.getSubject();
-        String subjText = subjSpan.getSpan();
-        String[] subjSplit = subjText.split(" ");
-        String firstWord = subjSplit[0];
-        List<Token> tokens = udp.getTokens();
-        int firstWordIndex = sentence.indexOf(firstWord);
-        int end = 1;
-        int start = 1;
-        for (Token t : tokens) {
-            if (t.getForm().equals(firstWord)) {
-                end = t.getId(); //end of the new span
-            }
-        }
-
-        System.out.println("Sogg: " + subjSpan + "\n" + "Start: " + firstWordIndex + "\n" + "len: " + sentence.length());
-        System.out.println(udp.getTokens());
-
+        System.out.println("[SUBJECT] " + subjSpan);
+        System.out.println(prevTokens);
         Span pre_subj;
-        if (firstWordIndex == -1) {
-            sentence = " ";
+        if (!prevTokens.isEmpty()) {
+            pre_subj = new Span(s, prevTokens.get(0).getId(), prevTokens.get(prevTokens.size()-1).getId());
         } else {
-            sentence = sentence.substring(0, firstWordIndex); //remaining sentence before the subject
+            pre_subj = new Span(s, 0, 0);
         }
-        pre_subj = new Span(sentence, start, end); //new span
-        System.out.println("nuovo span: " + pre_subj);
+
         pf = Utils.getPosFeature(pair.getA(), pre_subj);
         set.add("pre_subj" + sentence);
         for (String pos : pf.getB()) {
             set.add("pre_subj_t_" + pos);
         }
-        //PoS-tags into the sequence after the object
-        sentence = udp.getText();
-        System.out.println("-----------------------------------------------------------------------");
+        System.out.println(s);
 
+        //PoS-tags into the sequence after the object
+        udp = pair.getA();
+        sentence = udp.getText();
         Span objSpan = triple.getObject();
-        String objText = objSpan.getSpan();
-        String[] objSplit = objText.split(" ");
-        String lastWord = objSplit[objSplit.length-1];
+        int objEnd = objSpan.getEnd();
         tokens = udp.getTokens();
-        int sentenceLen = sentence.length();
-        int lastWordIndex = sentenceLen;
-        end = tokens.get(tokens.size()-1).getId(); //end of the new span
-        start = 1;
-        for (Token t : tokens) {
-            if (t.getForm().equals(lastWord)) {
-                    lastWordIndex = t.getEnd(); //for the substring
-                    start = t.getId(); //start of the new span
-            }
+        List<Token> postTokens;
+        int shift = tokens.size()-objEnd;
+        if (ngram < shift) {
+            postTokens = tokens.subList(objEnd, objEnd+ngram);
+        } else {
+            postTokens = tokens.subList(objEnd, tokens.get(tokens.size()-1).getId());
+        }
+        s = "";
+        for (Token t : postTokens) {
+            s = s.concat(t.getForm() + " ");
+        }
+        System.out.println("[OBJECT] " +objSpan);
+        System.out.println(postTokens);
+        Span post_obj;
+        if (!postTokens.isEmpty()) {
+            post_obj = new Span(s, postTokens.get(0).getId(), postTokens.get(postTokens.size()-1).getId());
+        } else {
+            post_obj = new Span(s, 0, 0);
         }
 
-        System.out.println("Ogg: " + objSpan + "\n" + "End: " + lastWordIndex + "\n" + "len: " + sentence.length());
-        System.out.println(udp.getTokens());
-
-        Span post_obj;
-        sentence = sentence.substring(lastWordIndex); //remaining sentence after the object
-        post_obj = new Span(sentence, start, end); //new span
-        System.out.println("nuovo span: " + post_obj);
         pf = Utils.getPosFeature(pair.getA(), post_obj);
         set.add("post_obj" + sentence);
         for (String pos : pf.getB()) {
             set.add("post_obj_t_" + pos);
         }
+        System.out.println(s);
 
         return set;
     }
@@ -803,6 +800,7 @@ public class CoTraining {
             // set the threshold used during self-training
             ct.setThPred(0.85);
             //ct.setThPred(0.0);   // in case of SVC
+            ct.setNgram(abs(3));
             // start co-training. Paramters: annotated data, unlabelled data, unlabelled data added to each iteration, max iterations, C
             /*ct.cotraining(new File("resources/bootstrapping/bootstrapping_train.csv"),
                     new File("resources/bootstrapping/triple_simpledep_text_20_01_dd.tsv"),
@@ -849,6 +847,10 @@ public class CoTraining {
      */
     public void setSolver(SolverType solver) {
         this.solver = solver;
+    }
+
+    public void setNgram (int n) {
+        this.ngram = n;
     }
 
 }
