@@ -174,11 +174,8 @@ public class CoTraining {
         System.out.println(s);
 
         //PoS-tags into the sequence after the object
-        udp = pair.getA();
-        sentence = udp.getText();
         Span objSpan = triple.getObject();
         int objEnd = objSpan.getEnd();
-        tokens = udp.getTokens();
         List<Token> postTokens;
         int shift = tokens.size()-objEnd;
         if (ngram < shift) {
@@ -800,7 +797,7 @@ public class CoTraining {
             // set the threshold used during self-training
             ct.setThPred(0.85);
             //ct.setThPred(0.0);   // in case of SVC
-            ct.setNgram(abs(3));
+            ct.setNgram(3);
             // start co-training. Paramters: annotated data, unlabelled data, unlabelled data added to each iteration, max iterations, C
             /*ct.cotraining(new File("resources/bootstrapping/bootstrapping_train.csv"),
                     new File("resources/bootstrapping/triple_simpledep_text_20_01_dd.tsv"),
@@ -850,7 +847,7 @@ public class CoTraining {
     }
 
     public void setNgram (int n) {
-        this.ngram = n;
+        this.ngram = abs(n);
     }
 
 }
