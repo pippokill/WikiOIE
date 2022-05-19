@@ -141,7 +141,6 @@ public class CoTraining {
         }
         //PoS-tags into the sequence before the subject
         UDPSentence udp = pair.getA();
-        String sentence = udp.getText();
         Span subjSpan = triple.getSubject();
         int subjStart = subjSpan.getStart();
         List<Token> tokens = udp.getTokens();
@@ -155,10 +154,7 @@ public class CoTraining {
         for (Token t : prevTokens) {
             s = s.concat(t.getForm() + " ");
         }
-        System.out.println("-----------------------------------------------------------------------");
-        System.out.println(sentence);
-        System.out.println("[SUBJECT] " + subjSpan);
-        System.out.println(prevTokens);
+
         Span pre_subj;
         if (!prevTokens.isEmpty()) {
             pre_subj = new Span(s, prevTokens.get(0).getId(), prevTokens.get(prevTokens.size()-1).getId());
@@ -167,11 +163,10 @@ public class CoTraining {
         }
 
         pf = Utils.getPosFeature(pair.getA(), pre_subj);
-        set.add("pre_subj" + sentence);
+        set.add("pre_subj" + s);
         for (String pos : pf.getB()) {
             set.add("pre_subj_t_" + pos);
         }
-        System.out.println(s);
 
         //PoS-tags into the sequence after the object
         Span objSpan = triple.getObject();
@@ -187,8 +182,6 @@ public class CoTraining {
         for (Token t : postTokens) {
             s = s.concat(t.getForm() + " ");
         }
-        System.out.println("[OBJECT] " +objSpan);
-        System.out.println(postTokens);
         Span post_obj;
         if (!postTokens.isEmpty()) {
             post_obj = new Span(s, postTokens.get(0).getId(), postTokens.get(postTokens.size()-1).getId());
@@ -197,11 +190,10 @@ public class CoTraining {
         }
 
         pf = Utils.getPosFeature(pair.getA(), post_obj);
-        set.add("post_obj" + sentence);
+        set.add("post_obj" + s);
         for (String pos : pf.getB()) {
             set.add("post_obj_t_" + pos);
         }
-        System.out.println(s);
 
         return set;
     }
@@ -788,7 +780,6 @@ public class CoTraining {
     public static void main(String[] args) {
         try {
             CoTraining ct = new CoTraining();
-            // init VectorReader
             VectorReader vr = new LuceneVectorReader(new File("C:/Users/angel/Documents/OIE4PA/Vectors/cc.it.300.vec.index"));
             vr.init();
             // set the learning algorithm
