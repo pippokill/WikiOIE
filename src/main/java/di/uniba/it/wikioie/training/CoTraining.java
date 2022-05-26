@@ -163,7 +163,7 @@ public class CoTraining {
         }
 
         pf = Utils.getPosFeature(pair.getA(), pre_subj);
-        set.add("pre_subj" + s);
+        set.add("pre_subj" + pf.getA());
         for (String pos : pf.getB()) {
             set.add("pre_subj_t_" + pos);
         }
@@ -190,7 +190,7 @@ public class CoTraining {
         }
 
         pf = Utils.getPosFeature(pair.getA(), post_obj);
-        set.add("post_obj" + s);
+        set.add("post_obj" + pf.getA());
         for (String pos : pf.getB()) {
             set.add("post_obj_t_" + pos);
         }
@@ -786,7 +786,7 @@ public class CoTraining {
             //ct.setSolver(SolverType.L2R_LR);
             ct.setSolver(SolverType.L2R_LR);
             // set the threshold used during self-training
-            ct.setThPred(0.85);
+            ct.setThPred(0.9);
             //ct.setThPred(0.0);   // in case of SVC
             ct.setNgram(3);
             // start co-training. Paramters: annotated data, unlabelled data, unlabelled data added to each iteration, max iterations, C
@@ -797,9 +797,9 @@ public class CoTraining {
             // evaluate the training set obtained by the self-training
             //ct.trainAndTest(new File("resources/bootstrapping/new_reg/tr_19"), new File("resources/bootstrapping/bootstrapping_test.csv"), 10);
 
-            ct.trainAndTest(new File("C:/Users/angel/Documents/OIE4PA/dataset_prova/training/training_set.tsv"),
-                    new File("C:/Users/angel/Documents/OIE4PA/dataset_prova/test/test_set.tsv"),
-                    vr, 16);
+            ct.trainAndTest(new File("C:/Users/angel/Documents/OIE4PA/Dataset/L/training/training_set.tsv"),
+                    new File("C:/Users/angel/Documents/OIE4PA/Dataset/L/test/test_set.tsv"),
+                    vr, 2);
         } catch (IOException ex) {
             Logger.getLogger(CoTraining.class.getName()).log(Level.SEVERE, null, ex);
         }
