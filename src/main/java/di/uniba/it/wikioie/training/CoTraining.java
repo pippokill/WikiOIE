@@ -671,10 +671,10 @@ public class CoTraining {
             balance(r, bal);
             LOG.log(Level.INFO, "New examples {0}", r.size());
             // save new training set
-            File newFile = new File(outputdir + "/tr_" + it);
+            File newFile = new File(outputdir + "/tr_" + it + ".tsv");
             Utils.copyByLine(annotatedFile, newFile);
             FileWriter writer = new FileWriter(newFile, true);
-            CSVPrinter printer = CSVFormat.DEFAULT.print(writer);
+            CSVPrinter printer = CSVFormat.TDF.print(writer);
             for (Pair<Integer, Integer> o : r) {
                 FileInstance fi = unlabelled.get(o.getA());
                 printer.printRecord("no title", fi.getText(), fi.getSubject(), fi.getPredicate(), fi.getObject(), o.getB().toString());
@@ -808,16 +808,16 @@ public class CoTraining {
             //ct.setThPred(0.0);   // in case of SVC
             ct.setNgram(3);
             // start co-training. Paramters: annotated data, unlabelled data, unlabelled data added to each iteration, max iterations, C
-            /*ct.cotraining(new File("resources/bootstrapping/bootstrapping_train.csv"),
-                    new File("resources/bootstrapping/triple_simpledep_text_20_01_dd.tsv"),
-                    "resources/bootstrapping/new_reg/",
-                    1000, 20, 10);*/
+            ct.cotraining(new File("C:/Users/angel/Documents/OIE4PA/Dataset/L/training/training_set.tsv"),
+                    new File("C:/Users/angel/Documents/OIE4PA/Dataset/U/u_triples_dd.tsv"),
+                    "C:/Users/angel/Documents/OIE4PA/Dataset/test",
+                    200, 20, 10);
             // evaluate the training set obtained by the self-training
             //ct.trainAndTest(new File("resources/bootstrapping/new_reg/tr_19"), new File("resources/bootstrapping/bootstrapping_test.csv"), 10);
 
-            ct.trainAndTest(new File("C:/Users/angel/Documents/OIE4PA/Dataset/L/training/training_set.tsv"),
-                    new File("C:/Users/angel/Documents/OIE4PA/Dataset/L/test/test_set.tsv"),
-                    vr, 2);
+            //ct.trainAndTest(new File("C:/Users/angel/Documents/OIE4PA/Dataset/L/training/training_set.tsv"),
+                    //new File("C:/Users/angel/Documents/OIE4PA/Dataset/L/test/test_set.tsv"),
+                    //vr, 2);
         } catch (IOException ex) {
             Logger.getLogger(CoTraining.class.getName()).log(Level.SEVERE, null, ex);
         }
