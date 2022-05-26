@@ -65,7 +65,6 @@ public class CoTraining {
          *
          */
         text,
-
         /**
          *
          */
@@ -146,18 +145,27 @@ public class CoTraining {
         List<Token> tokens = udp.getTokens();
         List<Token> prevTokens;
         String s = "";
+        String posS = "";
         if (ngram < subjStart) {
-            prevTokens = tokens.subList(subjStart-ngram, subjStart);
+            prevTokens = tokens.subList(subjStart - ngram, subjStart);
         } else {
             prevTokens = tokens.subList(0, subjStart);
         }
         for (Token t : prevTokens) {
-            s = s.concat(t.getForm() + " ");
+            s = s.concat(t.getForm().toLowerCase() + "_");
+            posS = posS.concat(t.getUpostag() + "_");
+        }
+        
+        set.add("PrevS_"+s);
+        set.add("PrevS_pos_"+posS);
+        for (int i=0;i<prevTokens.size();i++) {
+            set.add("PrevS_"+i+"_"+prevTokens.get(i).getForm().toLowerCase());
+            set.add("PrevS_pos_"+i+"_"+prevTokens.get(i).getUpostag());
         }
 
-        Span pre_subj;
+        /*Span pre_subj;
         if (!prevTokens.isEmpty()) {
-            pre_subj = new Span(s, prevTokens.get(0).getId(), prevTokens.get(prevTokens.size()-1).getId());
+            pre_subj = new Span(s, prevTokens.get(0).getId(), prevTokens.get(prevTokens.size() - 1).getId());
         } else {
             pre_subj = new Span(s, 0, 0);
         }
@@ -166,25 +174,35 @@ public class CoTraining {
         set.add("pre_subj" + pf.getA());
         for (String pos : pf.getB()) {
             set.add("pre_subj_t_" + pos);
-        }
+        }*/
 
         //PoS-tags into the sequence after the object
         Span objSpan = triple.getObject();
         int objEnd = objSpan.getEnd();
         List<Token> postTokens;
-        int shift = tokens.size()-objEnd;
+        int shift = tokens.size() - objEnd;
         if (ngram < shift) {
-            postTokens = tokens.subList(objEnd, objEnd+ngram);
+            postTokens = tokens.subList(objEnd, objEnd + ngram);
         } else {
-            postTokens = tokens.subList(objEnd, tokens.get(tokens.size()-1).getId());
+            postTokens = tokens.subList(objEnd, tokens.get(tokens.size() - 1).getId());
         }
         s = "";
+        posS = "";
         for (Token t : postTokens) {
             s = s.concat(t.getForm() + " ");
+            posS = posS.concat(t.getUpostag() + "_");
         }
-        Span post_obj;
+        
+        set.add("PostO_"+s);
+        set.add("PostO_pos_"+posS);
+        for (int i=0;i<postTokens.size();i++) {
+            set.add("PostO_"+i+"_"+postTokens.get(i).getForm().toLowerCase());
+            set.add("PostO_pos_"+i+"_"+postTokens.get(i).getUpostag());
+        }
+        
+        /*Span post_obj;
         if (!postTokens.isEmpty()) {
-            post_obj = new Span(s, postTokens.get(0).getId(), postTokens.get(postTokens.size()-1).getId());
+            post_obj = new Span(s, postTokens.get(0).getId(), postTokens.get(postTokens.size() - 1).getId());
         } else {
             post_obj = new Span(s, 0, 0);
         }
@@ -193,7 +211,7 @@ public class CoTraining {
         set.add("post_obj" + pf.getA());
         for (String pos : pf.getB()) {
             set.add("post_obj_t_" + pos);
-        }
+        }*/
 
         return set;
     }
@@ -837,7 +855,7 @@ public class CoTraining {
         this.solver = solver;
     }
 
-    public void setNgram (int n) {
+    public void setNgram(int n) {
         this.ngram = abs(n);
     }
 
