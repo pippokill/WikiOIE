@@ -45,7 +45,7 @@ public class SearchDoc implements Comparable<SearchDoc> {
 
     private String id;
 
-    private String wikiId;
+    private String datasetId;
 
     private String title;
 
@@ -90,13 +90,13 @@ public class SearchDoc implements Comparable<SearchDoc> {
     /**
      *
      * @param id
-     * @param wikiId
+     * @param datasetId
      * @param title
      * @param text
      */
-    public SearchDoc(String id, String wikiId, String title, String text) {
+    public SearchDoc(String id, String datasetId, String title, String text) {
         this.id = id;
-        this.wikiId = wikiId;
+        this.datasetId = datasetId;
         this.title = title;
         this.text = text;
     }
@@ -104,14 +104,14 @@ public class SearchDoc implements Comparable<SearchDoc> {
     /**
      *
      * @param id
-     * @param wikiId
+     * @param datasetId
      * @param title
      * @param text
      * @param searchScore
      */
-    public SearchDoc(String id, String wikiId, String title, String text, float searchScore) {
+    public SearchDoc(String id, String datasetId, String title, String text, float searchScore) {
         this.id = id;
-        this.wikiId = wikiId;
+        this.datasetId = datasetId;
         this.title = title;
         this.text = text;
         this.searchScore = searchScore;
@@ -137,16 +137,16 @@ public class SearchDoc implements Comparable<SearchDoc> {
      *
      * @return
      */
-    public String getWikiId() {
-        return wikiId;
+    public String getDatasetId() {
+        return datasetId;
     }
 
     /**
      *
-     * @param wikiId
+     * @param datasetId
      */
-    public void setWikiId(String wikiId) {
-        this.wikiId = wikiId;
+    public void setDatasetId(String datasetId) {
+        this.datasetId = datasetId;
     }
 
     /**

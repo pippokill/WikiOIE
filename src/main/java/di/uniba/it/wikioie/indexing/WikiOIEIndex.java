@@ -183,7 +183,7 @@ public class WikiOIEIndex {
                         if (added) {
                             Document doc = new Document();
                             doc.add(new StringField("id", String.valueOf(dc), Field.Store.YES));
-                            doc.add(new StringField("wiki_id", data.getId(), Field.Store.YES));
+                            doc.add(new StringField("ds_id", data.getId(), Field.Store.YES));
                             doc.add(new TextField("title", data.getTitle(), Field.Store.YES));
                             doc.add(new StoredField("text", data.getText()));
                             docWriter.addDocument(doc);
@@ -329,7 +329,7 @@ public class WikiOIEIndex {
         TopDocs td = docS.search(q, 1);
         if (td.scoreDocs.length > 0) {
             Document ld = docS.doc(td.scoreDocs[0].doc);
-            SearchDoc doc = new SearchDoc(ld.get("id"), ld.get("wiki_id"), ld.get("title"), ld.get("text"));
+            SearchDoc doc = new SearchDoc(ld.get("id"), ld.get("ds_id"), ld.get("title"), ld.get("text"));
             return doc;
         } else {
             return null;
@@ -338,17 +338,17 @@ public class WikiOIEIndex {
 
     /**
      *
-     * @param wikiId
+     * @param datasetId
      * @return
      * @throws IOException
      */
-    public List<SearchDoc> getDocByWikiId(String wikiId) throws IOException {
-        Query q = new TermQuery(new Term("wiki_id", wikiId));
+    public List<SearchDoc> getDocByDatasetId(String datasetId) throws IOException {
+        Query q = new TermQuery(new Term("ds_id", datasetId));
         TopDocs td = docS.search(q, 10000);
         List<SearchDoc> rs = new ArrayList<>();
         for (ScoreDoc sd : td.scoreDocs) {
             Document ld = docS.doc(sd.doc);
-            SearchDoc doc = new SearchDoc(ld.get("id"), ld.get("wiki_id"), ld.get("title"), ld.get("text"));
+            SearchDoc doc = new SearchDoc(ld.get("id"), ld.get("ds_id"), ld.get("title"), ld.get("text"));
             rs.add(doc);
         }
         return rs;
@@ -369,7 +369,7 @@ public class WikiOIEIndex {
         List<SearchDoc> rs = new ArrayList<>();
         for (ScoreDoc sd : topdocs.scoreDocs) {
             Document ld = docS.doc(sd.doc);
-            SearchDoc doc = new SearchDoc(ld.get("id"), ld.get("wiki_id"), ld.get("title"), ld.get("text"), sd.score);
+            SearchDoc doc = new SearchDoc(ld.get("id"), ld.get("ds_id"), ld.get("title"), ld.get("text"), sd.score);
             rs.add(doc);
         }
         return rs;
