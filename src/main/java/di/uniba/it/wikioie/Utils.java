@@ -39,6 +39,8 @@ import di.uniba.it.wikioie.data.Span;
 import di.uniba.it.wikioie.data.Token;
 import di.uniba.it.wikioie.data.Triple;
 import di.uniba.it.wikioie.training.FileInstance;
+import di.uniba.it.wikioie.training.Instance;
+import di.uniba.it.wikioie.training.TrainingSet;
 import di.uniba.it.wikioie.udp.UDPSentence;
 import di.uniba.it.wikioie.vectors.Vector;
 import di.uniba.it.wikioie.vectors.VectorReader;
@@ -63,6 +65,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.lang3.ArrayUtils;
 import org.jgrapht.Graph;
 
 /**
@@ -72,6 +75,22 @@ import org.jgrapht.Graph;
 public class Utils {
 
     private static final Logger LOG = Logger.getLogger(Utils.class.getName());
+
+    public static class DenseData {
+
+        public float[] labels;
+        public float[] data;
+        public int nrow;
+        public int ncol;
+    }
+
+    public static class CSRSparseData {
+
+        public float[] labels;
+        public float[] data;
+        public long[] rowHeaders;
+        public int[] colIndex;
+    }
 
     /**
      *
@@ -277,7 +296,6 @@ public class Utils {
         writer.close();
     }
 
-
     /**
      *
      * @param sentence
@@ -311,6 +329,32 @@ public class Utils {
         } else {
             return false;
         }
+    }
+
+    public static CSRSparseData getSparseData(TrainingSet ts) {
+        CSRSparseData spData = new CSRSparseData();
+        List<Float> tlabels = new ArrayList<>();
+        List<Float> tdata = new ArrayList<>();
+        List<Long> theaders = new ArrayList<>();
+        List<Integer> tindex = new ArrayList<>();
+        long rowheader = 0;
+        theaders.add(rowheader);
+        for (Instance i : ts.getSet()) {
+            Map<Integer, Float> features = i.getFeatures();
+            rowheader += features.size();
+            theaders.add(rowheader);
+            tlabels.add((float) i.getLabel());
+
+            for (Integer idx : features.keySet()) {
+                tdata.add(features.get(idx));
+                tindex.add(idx - 1);
+            }
+        }
+        spData.labels = ArrayUtils.toPrimitive(tlabels.toArray(new Float[tlabels.size()]));
+        spData.data = ArrayUtils.toPrimitive(tdata.toArray(new Float[tdata.size()]));
+        spData.colIndex = ArrayUtils.toPrimitive(tindex.toArray(new Integer[tindex.size()]));
+        spData.rowHeaders = ArrayUtils.toPrimitive(theaders.toArray(new Long[theaders.size()]));
+        return spData;
     }
 
 }
