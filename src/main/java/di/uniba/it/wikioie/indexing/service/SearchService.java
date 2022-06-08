@@ -58,6 +58,8 @@ import org.apache.lucene.queryparser.classic.ParseException;
  */
 @Path("search")
 public class SearchService {
+    
+    private static final int RS_SIZE=100;
 
     /**
      *
@@ -67,10 +69,10 @@ public class SearchService {
     @GET
     @Path("/triple")
     @Produces("application/json")
-    public Response triple(@DefaultValue("Italia") @QueryParam("q") String query) {
+    public Response triple(@QueryParam("q") String query) {
         List<SearchTriple> triples;
         try {
-            triples = IndexWrapper.getInstance().getIdx().searchTriple(query, 100);
+            triples = IndexWrapper.getInstance().getIdx().searchTriple(query, RS_SIZE);
         } catch (IOException | ParseException ex) {
             Logger.getLogger(SearchService.class.getName()).log(Level.SEVERE, null, ex);
             triples = new ArrayList<>();
@@ -88,7 +90,7 @@ public class SearchService {
     @GET
     @Path("/triplebydocid")
     @Produces("application/json")
-    public Response tripleByDocId(@DefaultValue("-1") @QueryParam("docid") String docid) {
+    public Response tripleByDocId(@QueryParam("docid") String docid) {
         List<SearchTriple> triples;
         try {
             triples = IndexWrapper.getInstance().getIdx().getTriplesByDocid(docid);
@@ -109,14 +111,14 @@ public class SearchService {
     @GET
     @Path("/docbyid")
     @Produces("application/json")
-    public Response docbyid(@DefaultValue("-1") @QueryParam("id") String id) {
+    public Response docbyid(@QueryParam("id") String id) {
         SearchDoc doc;
         try {
             doc = IndexWrapper.getInstance().getIdx().getDocById(id);
         } catch (IOException ex) {
             Logger.getLogger(SearchService.class.getName()).log(Level.SEVERE, null, ex);
             doc = new SearchDoc("-1");
-            doc.setWikiId("-1");
+            doc.setDatasetId("-1");
         }
         Gson gson = new Gson();
         String jsonString = gson.toJson(doc);
@@ -125,16 +127,16 @@ public class SearchService {
 
     /**
      *
-     * @param wikiId
+     * @param dsId
      * @return
      */
     @GET
     @Path("/doc")
     @Produces("application/json")
-    public Response doc(@DefaultValue("-1") @QueryParam("id") String wikiId) {
+    public Response doc(@QueryParam("id") String dsId) {
         List<SearchDoc> rs;
         try {
-            rs = IndexWrapper.getInstance().getIdx().getDocByWikiId(wikiId);
+            rs = IndexWrapper.getInstance().getIdx().getDocByDatasetId(dsId);
         } catch (IOException ex) {
             Logger.getLogger(SearchService.class.getName()).log(Level.SEVERE, null, ex);
             rs = new ArrayList<>();
@@ -155,7 +157,7 @@ public class SearchService {
     public Response docByTitle(@DefaultValue("Italia") @QueryParam("q") String query) {
         List<SearchDoc> rs;
         try {
-            rs = IndexWrapper.getInstance().getIdx().searchDocByTitle(query, 100);
+            rs = IndexWrapper.getInstance().getIdx().searchDocByTitle(query, RS_SIZE);
         } catch (IOException | ParseException ex) {
             Logger.getLogger(SearchService.class.getName()).log(Level.SEVERE, null, ex);
             rs = new ArrayList<>();
