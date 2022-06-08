@@ -130,6 +130,7 @@ public class WikiITSimpleDepSupervisedPassageProcessor implements PassageProcess
                     LOG.info("Solver: L2R.");
                     tr.setSolver(SolverType.L2R_LR);
                 }
+                vr.init();
                 ts = tr.generateFeatures(trainingfile, parser, wie, vr);
                 LOG.info("Training...");
                 model = tr.train(ts, C);

@@ -44,9 +44,11 @@ import static java.lang.Math.abs;
  */
 public class CoTraining {
 
-    private double thPred = 0.85;
+    private double thPred;
 
     private SolverType solver = SolverType.L2R_LR;
+
+    private static CoTraining ct;
 
     private int ngram = 0;
 
@@ -108,6 +110,7 @@ public class CoTraining {
     public Set<String> generateFeatureSet(Pair<UDPSentence, Triple> pair) {
         Set<String> set = new HashSet<>();
         Triple triple = pair.getB();
+
         //PoS-tags into the subject
         Pair<String, Set<String>> pf = Utils.getPosFeature(pair.getA(), triple.getSubject());
         set.add("pos_subj" + pf.getA());
@@ -129,6 +132,7 @@ public class CoTraining {
         //n-gram of the predicate
         set.add("pred_span_" + triple.getPredicate().getSpan().toLowerCase());
         //set of dependencies between subject and predicate
+
         Set<String> dependencies = Utils.getDependencies(pair.getA(), pair.getB().getSubject(), pair.getB().getPredicate());
         for (String f : dependencies) {
             set.add("S_" + f);
@@ -138,6 +142,7 @@ public class CoTraining {
         for (String f : dependencies) {
             set.add("O_" + f);
         }
+
         //PoS-tags into the sequence before the subject
         UDPSentence udp = pair.getA();
         Span subjSpan = triple.getSubject();
@@ -199,7 +204,7 @@ public class CoTraining {
             set.add("PostO_"+i+"_"+postTokens.get(i).getForm().toLowerCase());
             set.add("PostO_pos_"+i+"_"+postTokens.get(i).getUpostag());
         }
-        
+
         /*Span post_obj;
         if (!postTokens.isEmpty()) {
             post_obj = new Span(s, postTokens.get(0).getId(), postTokens.get(postTokens.size() - 1).getId());
@@ -430,8 +435,8 @@ public class CoTraining {
      * @param k
      * @param C
      */
-    @Deprecated
-    public void kfold(TrainingSet ts, int k, double C) {
+
+    public void kfold(TrainingSet ts, int k, double C) throws IOException {
         List<Integer> ids = new ArrayList<>(ts.getDict().values());
         Collections.sort(ids);
         Problem problem = new Problem();
@@ -466,7 +471,7 @@ public class CoTraining {
         for (double v : p) {
             pred.add((int) Math.round(v));
         }
-        computeMetrics(labels, pred);
+        computeMetrics(labels, pred, null);
     }
 
     /**
@@ -729,12 +734,13 @@ public class CoTraining {
         UDPParser parser = new UDPParser(Config.getInstance().getValue("udp.address"), Config.getInstance().getValue("udp.model"));
         WikiExtractor ie = new WikiITSimpleDepExtractor();
         TrainingSet tr = generateFeatures(trainFile, parser, ie, vr);
+        //kfold(tr, 5, C);
         Model model = train(tr, C);
         List<FileInstance> unlabelled = loadUnlabelled(testFile);
         List<Integer> labels = loadLabels(testFile);
         TrainingSet ts = generateTestFeatures(tr.getDict(), unlabelled, parser, ie, vr);
         List<Integer> pred = test(model, ts);
-        computeMetrics(labels, pred);
+        computeMetrics(labels, pred, trainFile.getParent());
     }
 
     /**
@@ -757,7 +763,7 @@ public class CoTraining {
      * @param labels
      * @param predicted
      */
-    public void computeMetrics(List<Integer> labels, List<Integer> predicted) {
+    public void computeMetrics(List<Integer> labels, List<Integer> predicted, String metricsPath) throws IOException {
         // remove no predicted instances
         int rn = 0;
         for (int i = predicted.size() - 1; i >= 0; i--) {
@@ -782,14 +788,26 @@ public class CoTraining {
         double r0 = (m[0][0] + m[0][1]) == 0 ? 0 : (double) m[0][0] / (double) (m[0][0] + m[0][1]);
         double p1 = (m[0][1] + m[1][1]) == 0 ? 0 : (double) m[1][1] / (double) (m[0][1] + m[1][1]);
         double r1 = (m[1][0] + m[1][1]) == 0 ? 0 : (double) m[1][1] / (double) (m[1][0] + m[1][1]);
-        System.out.println("P_0=" + p0);
-        System.out.println("R_0=" + r0);
-        System.out.println("P_1=" + p1);
-        System.out.println("R_1=" + r1);
-        System.out.println("F_0=" + F(p0, r0));
-        System.out.println("F_1=" + F(p1, r1));
-        System.out.println("F_M=" + (F(p0, r0) + F(p1, r1)) / 2);
-        System.out.println("acc.=" + ((double) (m[0][0] + m[1][1]) / (double) (m[0][0] + m[0][1] + m[1][0] + m[1][1])));
+        double f0 = F(p0, r0);
+        double f1 = F(p1, r1);
+        double fm = (F(p0, r0) + F(p1, r1)) / 2;
+        double accuracy = ((double) (m[0][0] + m[1][1]) / (double) (m[0][0] + m[0][1] + m[1][0] + m[1][1]));
+        if (metricsPath != null) {
+            File metrics = new File(metricsPath + "/metrics_" + ct.getThPred() + ".tsv");
+            FileWriter writer = new FileWriter(metrics, true);
+            CSVPrinter printer = CSVFormat.TDF.print(writer);
+            printer.printRecord(p0, r0, p1, r1, f0, f1, fm, accuracy);
+            writer.close();
+        }
+
+        System.out.println(p0);
+        System.out.println(r0);
+        System.out.println(p1);
+        System.out.println(r1);
+        System.out.println(f0);
+        System.out.println(f1);
+        System.out.println(fm);
+        System.out.println(accuracy);
     }
 
     /**
@@ -797,31 +815,58 @@ public class CoTraining {
      */
     public static void main(String[] args) {
         try {
-            CoTraining ct = new CoTraining();
+            ct = new CoTraining();
             VectorReader vr = new LuceneVectorReader(new File("C:/Users/angel/Documents/OIE4PA/Vectors/cc.it.300.vec.index"));
             vr.init();
             // set the learning algorithm
-            //ct.setSolver(SolverType.L2R_LR);
-            ct.setSolver(SolverType.L2R_LR);
-            // set the threshold used during self-training
-            ct.setThPred(0.9);
-            //ct.setThPred(0.0);   // in case of SVC
+            ct.setSolver(SolverType.L2R_L2LOSS_SVC);
+            // set the dimension of the n-gram
             ct.setNgram(3);
-            // start co-training. Paramters: annotated data, unlabelled data, unlabelled data added to each iteration, max iterations, C
-            ct.cotraining(new File("C:/Users/angel/Documents/OIE4PA/Dataset/L/training/training_set.tsv"),
-                    new File("C:/Users/angel/Documents/OIE4PA/Dataset/U/u_triples_dd.tsv"),
-                    "C:/Users/angel/Documents/OIE4PA/Dataset/test",
-                    200, 20, 10);
-            // evaluate the training set obtained by the self-training
-            //ct.trainAndTest(new File("resources/bootstrapping/new_reg/tr_19"), new File("resources/bootstrapping/bootstrapping_test.csv"), 10);
-
-            //ct.trainAndTest(new File("C:/Users/angel/Documents/OIE4PA/Dataset/L/training/training_set.tsv"),
-                    //new File("C:/Users/angel/Documents/OIE4PA/Dataset/L/test/test_set.tsv"),
-                    //vr, 2);
+            ct.searchC(vr, new File("C:/Users/angel/Documents/OIE4PA/Dataset/L/training_10/training_set_10.tsv"), new File("C:/Users/angel/Documents/OIE4PA/Dataset/L/test/test_set.tsv"));
+            String outputPath = "C:/Users/angel/Documents/OIE4PA/Training/SVC/cross_validation/ablation/10/no_vect";
+            String trainingPath = "C:/Users/angel/Documents/OIE4PA/Dataset/L/training_10/training_set_10.tsv";
+            ct.searchTh(vr, 1, outputPath, trainingPath, null);
         } catch (IOException ex) {
             Logger.getLogger(CoTraining.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
+
+    public void searchC(VectorReader vr, File training, File test) throws IOException {
+        ArrayList<Integer> valuesC = new ArrayList<>(Arrays.asList(1, 2, 4, 6, 8, 10, 16, 20, 25));
+        for(Integer c: valuesC) {
+            System.out.println("[C] " + c);
+            ct.trainAndTest(training, test, vr, c);
+            System.out.println("----------------------------------------------------------------------------------------");
+        }
+    }
+
+    public void searchTh(VectorReader vr, int C, String outputPath, String trainingPath, Double threshold) throws IOException {
+        ArrayList<Double> valuesTh;
+        if(threshold!=null) {
+            valuesTh = new ArrayList<>(List.of(threshold));
+        } else {
+            if (ct.getSolver().isLogisticRegressionSolver()) {
+                valuesTh = new ArrayList<>(Arrays.asList(0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.0));
+            } else {
+                valuesTh = new ArrayList<>(List.of(0.0));
+            }
+        }
+        for(Double th: valuesTh) {
+            System.out.println("[THRESHOLD] " + th);
+            ct.setThPred(th);
+            File outputDir = new File(outputPath + "/" + th);
+            outputDir.mkdirs();
+            // start co-training. Paramters: annotated data, unlabelled data, unlabelled data added to each iteration, max iterations, C
+            ct.cotraining(new File(trainingPath), new File("C:/Users/angel/Documents/OIE4PA/Dataset/U/u_triples_dd.tsv"),
+                    outputDir.getAbsolutePath(), 200, 20, C);
+            // evaluate the training set obtained by the self-training
+            ct.trainAndTest(new File(outputDir.getAbsolutePath() + "/tr_19.tsv"),
+                    new File("C:/Users/angel/Documents/OIE4PA/Dataset/L/test/test_set.tsv"), vr, C);
+            System.out.println("----------------------------------------------------------------------------------------");
+        }
+
+    }
+
 
     /**
      *
@@ -855,6 +900,10 @@ public class CoTraining {
         this.solver = solver;
     }
 
+    /**
+     *
+     * @param n
+     */
     public void setNgram(int n) {
         this.ngram = abs(n);
     }
