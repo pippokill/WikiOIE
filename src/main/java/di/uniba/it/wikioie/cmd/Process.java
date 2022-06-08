@@ -41,6 +41,9 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import di.uniba.it.wikioie.vectors.VectorReader;
+import di.uniba.it.wikioie.vectors.lucene.LuceneVectorReader;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -67,7 +70,8 @@ public class Process {
                 .addOption(new Option("p", true, "Processing class"))
                 .addOption(new Option("t", true, "Training file (optional)"))
                 .addOption(new Option("c", true, "C value (optional, default=1)"))
-                .addOption(new Option("s", true, "Solver (optional, L2R for logistic regression, SVC for support-vector classifier, default=L2R)"));
+                .addOption(new Option("s", true, "Solver (optional, L2R for logistic regression, SVC for support-vector classifier, default=L2R)"))
+                .addOption(new Option("v", true, "Vector embedding"));
         try {
             DefaultParser parser = new DefaultParser();
             CommandLine cmd = parser.parse(options, args);
@@ -77,8 +81,9 @@ public class Process {
                 try {
                     if (cmd.hasOption("t")) {
                         processor = (PassageProcessor) ClassLoader.getSystemClassLoader().loadClass("di.uniba.it.wikioie.indexing.post." + cmd.getOptionValue("p"))
-                                .getDeclaredConstructor(File.class, Double.class)
-                                .newInstance(new File(cmd.getOptionValue("t")), Double.parseDouble(cmd.getOptionValue("c", "1")), cmd.getOptionValue("s", "L2R"));
+                                .getDeclaredConstructor(File.class, Double.class, String.class, VectorReader.class).newInstance(new File(cmd.getOptionValue("t")),
+                                Double.parseDouble(cmd.getOptionValue("c", "1")), cmd.getOptionValue("s", "L2R"),
+                                new LuceneVectorReader(new File(cmd.getOptionValue("v"))));
                     } else {
                         processor = (PassageProcessor) ClassLoader.getSystemClassLoader().loadClass("di.uniba.it.wikioie.indexing.post." + cmd.getOptionValue("p")).getDeclaredConstructor().newInstance();
                     }

@@ -22,9 +22,9 @@ public class RemoveDuplicate {
      */
     public static void main(String[] args) {
         try {
-            Utils.removeDuplicate(new File("C:\\Users\\angel\\Documents\\OIE4PA\\Dataset\\L\\l_triples.tsv"),
-                     new File("C:\\Users\\angel\\Documents\\OIE4PA\\Dataset\\U\\u_triples.tsv"),
-                     new File("C:\\Users\\angel\\Documents\\OIE4PA\\Dataset\\U\\u_triples_dd.tsv"));
+            Utils.removeDuplicate(new File("C:/Users/angel/Documents/OIE4PA/Dataset/L/test/test_set.tsv"),
+                     new File("C:/Users/angel/Documents/OIE4PA/Dataset/L/training_16/training_set_16.tsv"),
+                     new File("C:/Users/angel/Documents/OIE4PA/Dataset/L/test/test.tsv"));
         } catch (IOException ex) {
             Logger.getLogger(RemoveDuplicate.class.getName()).log(Level.SEVERE, null, ex);
         }
