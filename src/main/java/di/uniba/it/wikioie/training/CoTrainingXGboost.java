@@ -634,7 +634,6 @@ public class CoTrainingXGboost {
      * @param trainFile
      * @param testFile
      * @param vr
-     * @param C
      * @throws IOException
      */
     public void trainAndTest(File trainFile, File testFile, VectorReader vr) throws IOException, XGBoostError {
