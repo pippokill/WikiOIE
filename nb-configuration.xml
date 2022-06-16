@@ -25,6 +25,7 @@ Any value defined here will override the pom.xml file value but is only applicab
             <configuration id="udpipe" profiles=""/>
             <configuration id="udpipe and processing" profiles=""/>
             <configuration id="vectors" profiles=""/>
+            <configuration id="split" profiles=""/>
         </configurations>
     </config-data>
 </project-shared-configuration>

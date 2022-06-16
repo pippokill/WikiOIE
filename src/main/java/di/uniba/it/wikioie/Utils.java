@@ -42,6 +42,7 @@ import di.uniba.it.wikioie.training.FileInstance;
 import di.uniba.it.wikioie.training.Instance;
 import di.uniba.it.wikioie.training.TrainingSet;
 import di.uniba.it.wikioie.udp.UDPSentence;
+import di.uniba.it.wikioie.vectors.RealVector;
 import di.uniba.it.wikioie.vectors.Vector;
 import di.uniba.it.wikioie.vectors.VectorReader;
 import di.uniba.it.wikioie.vectors.utils.SpaceUtils;
@@ -331,7 +332,7 @@ public class Utils {
         }
     }
 
-    public static CSRSparseData getSparseData(TrainingSet ts) {
+    public static Pair<CSRSparseData, Integer> getSparseData(TrainingSet ts) {
         CSRSparseData spData = new CSRSparseData();
         List<Float> tlabels = new ArrayList<>();
         List<Float> tdata = new ArrayList<>();
@@ -339,9 +340,13 @@ public class Utils {
         List<Integer> tindex = new ArrayList<>();
         long rowheader = 0;
         theaders.add(rowheader);
+        int maxds = 0;
         for (Instance i : ts.getSet()) {
             Map<Integer, Float> features = i.getFeatures();
             rowheader += features.size();
+            for (Vector v : i.getDenseFeature()) {
+                rowheader += v.getDimension();
+            }
             theaders.add(rowheader);
             tlabels.add((float) i.getLabel());
 
@@ -349,12 +354,33 @@ public class Utils {
                 tdata.add(features.get(idx));
                 tindex.add(idx - 1);
             }
+            int did = ts.getDict().size();
+            int ds = 0;
+            for (Vector v : i.getDenseFeature()) {
+                for (float c : ((RealVector) v).getCoordinates()) {
+                    tdata.add(c);
+                    tindex.add(did);
+                    did++;
+                }
+                ds += v.getDimension();
+            }
+            if (ds > maxds) {
+                maxds = ds;
+            }
         }
         spData.labels = ArrayUtils.toPrimitive(tlabels.toArray(new Float[tlabels.size()]));
         spData.data = ArrayUtils.toPrimitive(tdata.toArray(new Float[tdata.size()]));
         spData.colIndex = ArrayUtils.toPrimitive(tindex.toArray(new Integer[tindex.size()]));
         spData.rowHeaders = ArrayUtils.toPrimitive(theaders.toArray(new Long[theaders.size()]));
-        return spData;
+        return new Pair(spData, ts.getDict().size() + maxds);
+    }
+
+    public static double map(double v, double b1, double e1, double b2, double e2) {
+        return (v - b1) * (e2 - b2) / (e1 - b1) + b2;
+    }
+
+    public static void main(String[] args) {
+        System.out.println(map(0.3, 0, 0.5, 1, 0));
     }
 
 }

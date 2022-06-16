@@ -11,8 +11,6 @@ import di.uniba.it.wikioie.process.WikiExtractor;
 import di.uniba.it.wikioie.process.WikiITSimpleDepExtractor;
 import di.uniba.it.wikioie.udp.UDPParser;
 import di.uniba.it.wikioie.udp.UDPSentence;
-import di.uniba.it.wikioie.vectors.RealVector;
-import di.uniba.it.wikioie.vectors.Vector;
 import di.uniba.it.wikioie.vectors.VectorReader;
 import di.uniba.it.wikioie.vectors.lucene.LuceneVectorReader;
 import java.io.BufferedWriter;
@@ -44,16 +42,16 @@ public class CoTrainingXGboost {
 
     private static final Logger LOG = Logger.getLogger(CoTrainingXGboost.class.getName());
 
-    private static final Map<String, Object> params = new HashMap<>();
+    private static Map<String, Object> params = new HashMap<>();
 
     static {
-        params.put("eta", 0.3);
-        params.put("max_depth", 6);
-        params.put("silent", 1);
+        params.put("eta", 0.4);
+        params.put("max_depth", 12);
+        params.put("verbosity", 1);
         params.put("objective", "binary:logistic");
     }
 
-    private static final int round = 20;
+    private static int round = 80;
 
     /**
      *
@@ -388,10 +386,10 @@ public class CoTrainingXGboost {
      * @throws ml.dmlc.xgboost4j.java.XGBoostError
      */
     public Booster train(TrainingSet ts) throws XGBoostError {
-        Utils.CSRSparseData spData = Utils.getSparseData(ts);
-        DMatrix matrix = new DMatrix(spData.rowHeaders, spData.colIndex, spData.data,
-                DMatrix.SparseType.CSR, ts.getDict().size());
-        matrix.setLabel(spData.labels);
+        Pair<Utils.CSRSparseData, Integer> p = Utils.getSparseData(ts);
+        DMatrix matrix = new DMatrix(p.getA().rowHeaders, p.getA().colIndex, p.getA().data,
+                DMatrix.SparseType.CSR, p.getB());
+        matrix.setLabel(p.getA().labels);
         Map<String, DMatrix> watches = new HashMap<String, DMatrix>() {
             {
                 put("train", matrix);
@@ -402,17 +400,33 @@ public class CoTrainingXGboost {
 
     /**
      *
-     * @param ts
+     * @param trainFile
+     * @param vr
      * @param k
      * @throws ml.dmlc.xgboost4j.java.XGBoostError
      */
-    @Deprecated
-    public void kfold(TrainingSet ts, int k) throws XGBoostError {
-        Utils.CSRSparseData spData = Utils.getSparseData(ts);
-        DMatrix matrix = new DMatrix(spData.rowHeaders, spData.colIndex, spData.data,
-                DMatrix.SparseType.CSR, 127);
-        matrix.setLabel(spData.labels);
-        XGBoost.crossValidation(matrix, params, round, k, null, null, null);
+    public void kfold(File trainFile, int k, VectorReader vr) throws XGBoostError, IOException {
+        UDPParser parser = new UDPParser(Config.getInstance().getValue("udp.address"), Config.getInstance().getValue("udp.model"));
+        WikiExtractor ie = new WikiITSimpleDepExtractor();
+        TrainingSet tr = generateFeatures(trainFile, parser, ie, vr);
+        Pair<Utils.CSRSparseData, Integer> p = Utils.getSparseData(tr);
+        DMatrix matrix = new DMatrix(p.getA().rowHeaders, p.getA().colIndex, p.getA().data,
+                DMatrix.SparseType.CSR, p.getB());
+        matrix.setLabel(p.getA().labels);
+        int[] depth = new int[]{15, 18};
+        double[] etav = new double[]{0.1, 0.2, 0.3, 0.4};
+        int[] roundv = new int[]{20, 40, 80, 100};
+        for (int d : depth) {
+            params.put("max_depth", d);
+            for (double e : etav) {
+                params.put("eta", e);
+                for (int r : roundv) {
+                    round = r;
+                    String[] cv = XGBoost.crossValidation(matrix, params, round, k, new String[]{"auc"}, null, null);
+                    System.out.println(d + "\t" + e + "\t" + r + "\t" + cv[cv.length - 2] + "\t" + cv[cv.length - 1]);
+                }
+            }
+        }
     }
 
     /**
@@ -424,16 +438,20 @@ public class CoTrainingXGboost {
      */
     public List<Pair<Integer, Integer>> testWithProb(Booster booster, TrainingSet ts) throws XGBoostError {
         List<Pair<Integer, Integer>> r = new ArrayList<>();
-        Utils.CSRSparseData spData = Utils.getSparseData(ts);
-        DMatrix matrix = new DMatrix(spData.rowHeaders, spData.colIndex, spData.data,
-                DMatrix.SparseType.CSR, ts.getDict().size());
+        Pair<Utils.CSRSparseData, Integer> p = Utils.getSparseData(ts);
+        DMatrix matrix = new DMatrix(p.getA().rowHeaders, p.getA().colIndex, p.getA().data,
+                DMatrix.SparseType.CSR, p.getB());
         float[][] predict = booster.predict(matrix);
         List<Instance> l = ts.getSet();
         for (int k = 0; k < l.size(); k++) {
-            if (predict[k][0] >= thPred) {
-                r.add(new Pair<>(l.get(k).getId(), 1));
-            } else if ((1 - predict[k][0]) >= thPred) {
-                r.add(new Pair<>(l.get(k).getId(), 0));
+            if (predict[k][0] >= 0.5) {
+                if (Utils.map(predict[k][0], 0.5, 1, 0, 1) >= thPred) {
+                    r.add(new Pair<>(l.get(k).getId(), 1));
+                }
+            } else {
+                if (Utils.map(predict[k][0], 0, 0.5, 1, 0) >= thPred) {
+                    r.add(new Pair<>(l.get(k).getId(), 0));
+                }
             }
         }
         return r;
@@ -447,9 +465,9 @@ public class CoTrainingXGboost {
      * @throws ml.dmlc.xgboost4j.java.XGBoostError
      */
     public List<Integer> test(Booster booster, TrainingSet ts) throws XGBoostError {
-        Utils.CSRSparseData spData = Utils.getSparseData(ts);
-        DMatrix matrix = new DMatrix(spData.rowHeaders, spData.colIndex, spData.data,
-                DMatrix.SparseType.CSR, ts.getDict().size());
+        Pair<Utils.CSRSparseData, Integer> p = Utils.getSparseData(ts);
+        DMatrix matrix = new DMatrix(p.getA().rowHeaders, p.getA().colIndex, p.getA().data,
+                DMatrix.SparseType.CSR, p.getB());
         float[][] predict = booster.predict(matrix);
         List<Instance> l = ts.getSet();
         List<Integer> r = new ArrayList<>();
@@ -469,9 +487,9 @@ public class CoTrainingXGboost {
      */
     public List<Pair<Integer, Integer>> testWithoutProb(Booster booster, TrainingSet ts) throws XGBoostError {
         List<Pair<Integer, Integer>> r = new ArrayList<>();
-        Utils.CSRSparseData spData = Utils.getSparseData(ts);
-        DMatrix matrix = new DMatrix(spData.rowHeaders, spData.colIndex, spData.data,
-                DMatrix.SparseType.CSR, ts.getDict().size());
+        Pair<Utils.CSRSparseData, Integer> p = Utils.getSparseData(ts);
+        DMatrix matrix = new DMatrix(p.getA().rowHeaders, p.getA().colIndex, p.getA().data,
+                DMatrix.SparseType.CSR, p.getB());
         float[][] predict = booster.predict(matrix);
         List<Instance> l = ts.getSet();
         for (int k = 0; k < l.size(); k++) {
@@ -675,14 +693,14 @@ public class CoTrainingXGboost {
         double r0 = (m[0][0] + m[0][1]) == 0 ? 0 : (double) m[0][0] / (double) (m[0][0] + m[0][1]);
         double p1 = (m[0][1] + m[1][1]) == 0 ? 0 : (double) m[1][1] / (double) (m[0][1] + m[1][1]);
         double r1 = (m[1][0] + m[1][1]) == 0 ? 0 : (double) m[1][1] / (double) (m[1][0] + m[1][1]);
-        System.out.println("P_0=" + p0);
-        System.out.println("R_0=" + r0);
-        System.out.println("P_1=" + p1);
-        System.out.println("R_1=" + r1);
-        System.out.println("F_0=" + F(p0, r0));
-        System.out.println("F_1=" + F(p1, r1));
-        System.out.println("F_M=" + (F(p0, r0) + F(p1, r1)) / 2);
-        System.out.println("acc.=" + ((double) (m[0][0] + m[1][1]) / (double) (m[0][0] + m[0][1] + m[1][0] + m[1][1])));
+        System.out.println("P_0\t" + p0);
+        System.out.println("R_0\t" + r0);
+        System.out.println("P_1\t" + p1);
+        System.out.println("R_1\t" + r1);
+        System.out.println("F_0\t" + F(p0, r0));
+        System.out.println("F_1\t" + F(p1, r1));
+        System.out.println("F_M\t" + (F(p0, r0) + F(p1, r1)) / 2);
+        System.out.println("acc.\t" + ((double) (m[0][0] + m[1][1]) / (double) (m[0][0] + m[0][1] + m[1][0] + m[1][1])));
     }
 
     /**
@@ -691,30 +709,29 @@ public class CoTrainingXGboost {
     public static void main(String[] args) {
         try {
             CoTrainingXGboost ct = new CoTrainingXGboost();
-            //VectorReader vr = new LuceneVectorReader(new File("C:/Users/angel/Documents/OIE4PA/Vectors/cc.it.300.vec.index"));
-            //vr.init();
+            VectorReader vr = new LuceneVectorReader(new File("/home/pierpaolo/data/fasttext/cc.it.300.vec.index"));
+            vr.init();
             // set the learning algorithm
             //ct.setSolver(SolverType.L2R_LR);
             //ct.setSolver(SolverType.L2R_LR);
             // set the threshold used during self-training
-            ct.setThPred(0.9);
+            ct.setThPred(0.8);
             //ct.setThPred(0.0);   // in case of SVC
             ct.setNgram(3);
             // start co-training. Paramters: annotated data, unlabelled data, unlabelled data added to each iteration, max iterations, C
-            /*ct.cotraining(new File("C:/Users/angel/Documents/OIE4PA/Dataset/L/training/training_set.tsv"),
-                    new File("C:/Users/angel/Documents/OIE4PA/Dataset/U/u_triples_dd.tsv"),
-                    "C:/Users/angel/Documents/OIE4PA/Dataset/test",
-                    200, 20);*/
+            ct.cotraining(new File("/home/pierpaolo/Scaricati/temp/siap/oie/OIE_new/training_set.tsv"),
+                    new File("/home/pierpaolo/Scaricati/temp/siap/oie/OIE_new/u_triples_dd.tsv"),
+                    "/home/pierpaolo/Scaricati/temp/siap/oie/OIE_new/cotr_08",
+                    200, 20);
             // evaluate the training set obtained by the self-training
             //ct.trainAndTest(new File("resources/bootstrapping/new_reg/tr_19"), new File("resources/bootstrapping/bootstrapping_test.csv"), 10);
-            ct.trainAndTest(new File("/home/pierpaolo/Scaricati/temp/siap/oie/OIE_new/training_set.tsv"),
-                    new File("/home/pierpaolo/Scaricati/temp/siap/oie/OIE_new/test_set.tsv"));
+            //ct.kfold(new File("/home/pierpaolo/Scaricati/temp/siap/oie/OIE_new/training_set.tsv"), 5, vr);
+            ct.trainAndTest(new File("/home/pierpaolo/Scaricati/temp/siap/oie/OIE_new/cotr_08/tr_19.tsv"),
+                    new File("/home/pierpaolo/Scaricati/temp/siap/oie/OIE_new/test_set.tsv"), vr);
             //ct.trainAndTest(new File("C:/Users/angel/Documents/OIE4PA/Dataset/L/training/training_set.tsv"),
             //new File("C:/Users/angel/Documents/OIE4PA/Dataset/L/test/test_set.tsv"),
             //vr, 2);
-        } catch (IOException ex) {
-            Logger.getLogger(CoTrainingXGboost.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (XGBoostError ex) {
+        } catch (IOException | XGBoostError ex) {
             Logger.getLogger(CoTrainingXGboost.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
