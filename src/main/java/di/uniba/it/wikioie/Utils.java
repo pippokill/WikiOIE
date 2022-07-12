@@ -77,19 +77,55 @@ public class Utils {
 
     private static final Logger LOG = Logger.getLogger(Utils.class.getName());
 
+    /**
+     *
+     */
     public static class DenseData {
 
+        /**
+         *
+         */
         public float[] labels;
+
+        /**
+         *
+         */
         public float[] data;
+
+        /**
+         *
+         */
         public int nrow;
+
+        /**
+         *
+         */
         public int ncol;
     }
 
+    /**
+     *
+     */
     public static class CSRSparseData {
 
+        /**
+         *
+         */
         public float[] labels;
+
+        /**
+         *
+         */
         public float[] data;
+
+        /**
+         *
+         */
         public long[] rowHeaders;
+
+        /**
+         *
+         */
         public int[] colIndex;
     }
 
@@ -332,6 +368,11 @@ public class Utils {
         }
     }
 
+    /**
+     *
+     * @param ts
+     * @return
+     */
     public static Pair<CSRSparseData, Integer> getSparseData(TrainingSet ts) {
         CSRSparseData spData = new CSRSparseData();
         List<Float> tlabels = new ArrayList<>();
@@ -375,10 +416,25 @@ public class Utils {
         return new Pair(spData, ts.getDict().size() + maxds);
     }
 
+    /**
+     *
+     * @param v
+     * @param b1
+     * @param e1
+     * @param b2
+     * @param e2
+     * @return
+     */
     public static double map(double v, double b1, double e1, double b2, double e2) {
         return (v - b1) * (e2 - b2) / (e1 - b1) + b2;
     }
 
+    /**
+     *
+     * @param value
+     * @return
+     * @throws IllegalArgumentException
+     */
     public static Map<String, String> getOptionParams(String value) throws IllegalArgumentException {
         Map<String, String> params = new HashMap<>();
         String[] split = value.split(";");
@@ -393,6 +449,10 @@ public class Utils {
         return params;
     }
 
+    /**
+     *
+     * @param args
+     */
     public static void main(String[] args) {
         System.out.println(map(0.3, 0, 0.5, 1, 0));
     }

@@ -88,9 +88,9 @@ public class WikiITSimpleDepXGboostPassageProcessor implements PassageProcessor 
     /**
      *
      * @param trainingfile
-     * @param C
-     * @param solvername
+     * @param params
      * @param vr
+     * @param round
      */
     public WikiITSimpleDepXGboostPassageProcessor(File trainingfile, VectorReader vr, Map<String, Object> params, int round) {
         this.wie = new WikiITSimpleDepExtractor();
@@ -104,8 +104,8 @@ public class WikiITSimpleDepXGboostPassageProcessor implements PassageProcessor 
     /**
      *
      * @param trainingfile
-     * @param C
-     * @param solvername
+     * @param params
+     * @param round
      */
     public WikiITSimpleDepXGboostPassageProcessor(File trainingfile, Map<String, Object> params, int round) {
         this(trainingfile, null, params, round);

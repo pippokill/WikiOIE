@@ -623,7 +623,7 @@ public class RealVector implements Vector {
 
     /**
      * Available for testing and copying.Try not to use in new code!
-     * @param floats
+     * @param coordinates
      */
     public RealVector(float[] coordinates) {
         this.dimension = coordinates.length;

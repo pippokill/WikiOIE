@@ -88,6 +88,12 @@ public class SVCCoTraining {
         label
     }
     
+    /**
+     *
+     * @param P
+     * @param R
+     * @return
+     */
     public double F(double P, double R) {
         return (P + R) == 0 ? 0 : 2 * P * R / (P + R);
     }
@@ -437,6 +443,7 @@ public class SVCCoTraining {
      * @param ts
      * @param k
      * @param C
+     * @throws java.io.IOException
      */
 
     public void kfold(TrainingSet ts, int k, double C) throws IOException {
@@ -832,6 +839,13 @@ public class SVCCoTraining {
         }
     }
 
+    /**
+     *
+     * @param vr
+     * @param training
+     * @param test
+     * @throws IOException
+     */
     public void searchC(VectorReader vr, File training, File test) throws IOException {
         ArrayList<Integer> valuesC = new ArrayList<>(Arrays.asList(1, 2, 4, 6, 8, 10, 16, 20, 25));
         for(Integer c: valuesC) {
@@ -841,6 +855,15 @@ public class SVCCoTraining {
         }
     }
 
+    /**
+     *
+     * @param vr
+     * @param C
+     * @param outputPath
+     * @param trainingPath
+     * @param threshold
+     * @throws IOException
+     */
     public void searchTh(VectorReader vr, int C, String outputPath, String trainingPath, Double threshold) throws IOException {
         ArrayList<Double> valuesTh;
         if(threshold!=null) {

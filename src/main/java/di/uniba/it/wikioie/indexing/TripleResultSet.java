@@ -18,18 +18,35 @@ public class TripleResultSet {
 
     private final List<SearchTriple> triples;
 
+    /**
+     *
+     * @param triples
+     */
     public TripleResultSet(List<SearchTriple> triples) {
         this.triples = triples;
     }
 
+    /**
+     *
+     * @return
+     */
     public List<SearchTriple> getTriples() {
         return triples;
     }
 
+    /**
+     *
+     * @return
+     */
     public int getSize() {
         return this.triples.size();
     }
 
+    /**
+     *
+     * @param function
+     * @return
+     */
     public Map<String, List<SearchTriple>> collapse(Function<SearchTriple, String> function) {
         Map<String, List<SearchTriple>> map = triples.stream().collect(Collectors.groupingBy(function));
         map.values().stream().forEach(v -> Collections.sort(v, Collections.reverseOrder()));

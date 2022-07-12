@@ -77,6 +77,12 @@ public class XGboostCoTraining {
         label
     }
 
+    /**
+     *
+     * @param P
+     * @param R
+     * @return
+     */
     public double F(double P, double R) {
         return (P + R) == 0 ? 0 : 2 * P * R / (P + R);
     }
@@ -375,6 +381,8 @@ public class XGboostCoTraining {
     /**
      *
      * @param ts
+     * @param params
+     * @param round
      * @return
      * @throws ml.dmlc.xgboost4j.java.XGBoostError
      */
@@ -397,6 +405,7 @@ public class XGboostCoTraining {
      * @param vr
      * @param k
      * @throws ml.dmlc.xgboost4j.java.XGBoostError
+     * @throws java.io.IOException
      */
     public void kfold(File trainFile, int k, VectorReader vr) throws XGBoostError, IOException {
         UDPParser parser = new UDPParser(Config.getInstance().getValue("udp.address"), Config.getInstance().getValue("udp.model"));
@@ -548,6 +557,8 @@ public class XGboostCoTraining {
      * @param vr
      * @param p
      * @param maxit
+     * @param params
+     * @param round
      * @throws IOException
      * @throws ml.dmlc.xgboost4j.java.XGBoostError
      */
@@ -623,7 +634,10 @@ public class XGboostCoTraining {
      * @param outputdir
      * @param p
      * @param maxit
+     * @param params
+     * @param round
      * @throws IOException
+     * @throws ml.dmlc.xgboost4j.java.XGBoostError
      */
     public void cotraining(File annotatedFile, File dataFile, String outputdir, int p, int maxit, Map<String, Object> params, int round) throws IOException, XGBoostError {
         cotraining(annotatedFile, dataFile, outputdir, null, p, maxit, params, round);
@@ -634,7 +648,10 @@ public class XGboostCoTraining {
      * @param trainFile
      * @param testFile
      * @param vr
+     * @param params
+     * @param round
      * @throws IOException
+     * @throws ml.dmlc.xgboost4j.java.XGBoostError
      */
     public void trainAndTest(File trainFile, File testFile, VectorReader vr, Map<String, Object> params, int round) throws IOException, XGBoostError {
         UDPParser parser = new UDPParser(Config.getInstance().getValue("udp.address"), Config.getInstance().getValue("udp.model"));
@@ -652,7 +669,10 @@ public class XGboostCoTraining {
      *
      * @param trainFile
      * @param testFile
+     * @param params
+     * @param round
      * @throws IOException
+     * @throws ml.dmlc.xgboost4j.java.XGBoostError
      */
     public void trainAndTest(File trainFile, File testFile, Map<String, Object> params, int round) throws IOException, XGBoostError {
         trainAndTest(trainFile, testFile, null, params, round);
@@ -662,6 +682,7 @@ public class XGboostCoTraining {
      *
      * @param labels
      * @param predicted
+     * @param metricsPath
      */
     public void computeMetrics(List<Integer> labels, List<Integer> predicted, String metricsPath) {
         // remove no predicted instances
@@ -756,6 +777,10 @@ public class XGboostCoTraining {
         this.thPred = thPred;
     }
 
+    /**
+     *
+     * @param n
+     */
     public void setNgram(int n) {
         this.ngram = Math.abs(n);
     }

@@ -51,7 +51,7 @@ public class ObjectVector implements Comparable<ObjectVector> {
     /**
      *
      * @param key
-     * @param d
+     * @param score
      */
     public ObjectVector(String key, double score) {
         this.key = key;
