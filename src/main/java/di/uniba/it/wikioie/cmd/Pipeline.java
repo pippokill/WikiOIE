@@ -22,7 +22,7 @@ import org.apache.commons.cli.ParseException;
  * @author pierpaolo
  */
 public class Pipeline {
-
+    
     private static final Logger LOG = Logger.getLogger(Pipeline.class.getName());
 
     /**
@@ -35,6 +35,8 @@ public class Pipeline {
                 .addOption(new Option("p", true, "Processor"))
                 .addOption(new Option("t", true, "Number of threads (optional, default 4)"))
                 .addOption(new Option("d", true, "Training file (optional)"))
+                .addOption(new Option("ds", true, "Training supervised approach"))
+                .addOption(new Option("dp", true, "Training parameters"))
                 .addOption(new Option("s", true, "Sampling (optional)"))
                 .addOption(new Option("f", false, "Use predicate occurrances file (optional)"))
                 .addOption(new Option("m", true, "Min predicate occurrances (used with option -f, optional, 5)"))
@@ -55,7 +57,7 @@ public class Pipeline {
                 ProcessUDpipe.main(new String[]{"-i", cmd.getOptionValue("i"), "-o", udpipedir.getAbsolutePath(), "-t", cmd.getOptionValue("t", "4")});
                 LOG.info("Processing...");
                 if (cmd.hasOption("d")) {
-                    Process.main(new String[]{"-i", udpipedir.getAbsolutePath(), "-o", extdir.getAbsolutePath(), "-p", cmd.getOptionValue("p"), "-t", cmd.getOptionValue("d")});
+                    Process.main(new String[]{"-i", udpipedir.getAbsolutePath(), "-o", extdir.getAbsolutePath(), "-p", cmd.getOptionValue("p"), "-t", cmd.getOptionValue("d"), "-ts", cmd.getOptionValue("ds"), "-tp", cmd.getOptionValue("dp")});
                 } else {
                     Process.main(new String[]{"-i", udpipedir.getAbsolutePath(), "-o", extdir.getAbsolutePath(), "-p", cmd.getOptionValue("p")});
                 }
@@ -92,5 +94,5 @@ public class Pipeline {
             Logger.getLogger(Process.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-
+    
 }

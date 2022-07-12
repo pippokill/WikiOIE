@@ -5,21 +5,12 @@
  */
 package di.uniba.it.wikioie.training;
 
-import de.bwaldvogel.liblinear.Feature;
-import de.bwaldvogel.liblinear.FeatureNode;
-import de.bwaldvogel.liblinear.Linear;
-import de.bwaldvogel.liblinear.Model;
-import de.bwaldvogel.liblinear.Parameter;
-import de.bwaldvogel.liblinear.Problem;
-import de.bwaldvogel.liblinear.SolverType;
 import di.uniba.it.wikioie.Utils;
 import di.uniba.it.wikioie.data.*;
 import di.uniba.it.wikioie.process.WikiExtractor;
 import di.uniba.it.wikioie.process.WikiITSimpleDepExtractor;
 import di.uniba.it.wikioie.udp.UDPParser;
 import di.uniba.it.wikioie.udp.UDPSentence;
-import di.uniba.it.wikioie.vectors.RealVector;
-import di.uniba.it.wikioie.vectors.Vector;
 import di.uniba.it.wikioie.vectors.VectorReader;
 import di.uniba.it.wikioie.vectors.lucene.LuceneVectorReader;
 import java.io.BufferedWriter;
@@ -31,28 +22,25 @@ import java.io.Reader;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.lang.String;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
-
-import static java.lang.Math.abs;
+import ml.dmlc.xgboost4j.java.Booster;
+import ml.dmlc.xgboost4j.java.DMatrix;
+import ml.dmlc.xgboost4j.java.XGBoost;
+import ml.dmlc.xgboost4j.java.XGBoostError;
 
 /**
  *
  * @author pierpaolo
  */
-public class CoTraining {
+public class XGboostCoTraining {
 
-    private double thPred;
-
-    private SolverType solver = SolverType.L2R_LR;
-
-    private static CoTraining ct;
+    private double thPred = 0.85;
 
     private int ngram = 0;
 
-    private static final Logger LOG = Logger.getLogger(CoTraining.class.getName());
+    private static final Logger LOG = Logger.getLogger(XGboostCoTraining.class.getName());
 
     /**
      *
@@ -89,6 +77,10 @@ public class CoTraining {
         label
     }
 
+    public double F(double P, double R) {
+        return (P + R) == 0 ? 0 : 2 * P * R / (P + R);
+    }
+
     private Pair<UDPSentence, Triple> ieprocessing(String text, UDPParser parser, WikiExtractor extractor, String subj, String pred, String obj) throws IOException {
         List<UDPSentence> sentences = parser.getSentences(text);
         for (UDPSentence s : sentences) {
@@ -110,7 +102,6 @@ public class CoTraining {
     public Set<String> generateFeatureSet(Pair<UDPSentence, Triple> pair) {
         Set<String> set = new HashSet<>();
         Triple triple = pair.getB();
-
         //PoS-tags into the subject
         Pair<String, Set<String>> pf = Utils.getPosFeature(pair.getA(), triple.getSubject());
         set.add("pos_subj" + pf.getA());
@@ -132,7 +123,6 @@ public class CoTraining {
         //n-gram of the predicate
         set.add("pred_span_" + triple.getPredicate().getSpan().toLowerCase());
         //set of dependencies between subject and predicate
-
         Set<String> dependencies = Utils.getDependencies(pair.getA(), pair.getB().getSubject(), pair.getB().getPredicate());
         for (String f : dependencies) {
             set.add("S_" + f);
@@ -142,7 +132,6 @@ public class CoTraining {
         for (String f : dependencies) {
             set.add("O_" + f);
         }
-
         //PoS-tags into the sequence before the subject
         UDPSentence udp = pair.getA();
         Span subjSpan = triple.getSubject();
@@ -160,12 +149,12 @@ public class CoTraining {
             s = s.concat(t.getForm().toLowerCase() + "_");
             posS = posS.concat(t.getUpostag() + "_");
         }
-        
-        set.add("PrevS_"+s);
-        set.add("PrevS_pos_"+posS);
-        for (int i=0;i<prevTokens.size();i++) {
-            set.add("PrevS_"+i+"_"+prevTokens.get(i).getForm().toLowerCase());
-            set.add("PrevS_pos_"+i+"_"+prevTokens.get(i).getUpostag());
+
+        set.add("PrevS_" + s);
+        set.add("PrevS_pos_" + posS);
+        for (int i = 0; i < prevTokens.size(); i++) {
+            set.add("PrevS_" + i + "_" + prevTokens.get(i).getForm().toLowerCase());
+            set.add("PrevS_pos_" + i + "_" + prevTokens.get(i).getUpostag());
         }
 
         /*Span pre_subj;
@@ -180,7 +169,6 @@ public class CoTraining {
         for (String pos : pf.getB()) {
             set.add("pre_subj_t_" + pos);
         }*/
-
         //PoS-tags into the sequence after the object
         Span objSpan = triple.getObject();
         int objEnd = objSpan.getEnd();
@@ -197,12 +185,12 @@ public class CoTraining {
             s = s.concat(t.getForm() + " ");
             posS = posS.concat(t.getUpostag() + "_");
         }
-        
-        set.add("PostO_"+s);
-        set.add("PostO_pos_"+posS);
-        for (int i=0;i<postTokens.size();i++) {
-            set.add("PostO_"+i+"_"+postTokens.get(i).getForm().toLowerCase());
-            set.add("PostO_pos_"+i+"_"+postTokens.get(i).getUpostag());
+
+        set.add("PostO_" + s);
+        set.add("PostO_pos_" + posS);
+        for (int i = 0; i < postTokens.size(); i++) {
+            set.add("PostO_" + i + "_" + postTokens.get(i).getForm().toLowerCase());
+            set.add("PostO_pos_" + i + "_" + postTokens.get(i).getUpostag());
         }
 
         /*Span post_obj;
@@ -217,7 +205,6 @@ public class CoTraining {
         for (String pos : pf.getB()) {
             set.add("post_obj_t_" + pos);
         }*/
-
         return set;
     }
 
@@ -388,167 +375,83 @@ public class CoTraining {
     /**
      *
      * @param ts
-     * @param C
      * @return
+     * @throws ml.dmlc.xgboost4j.java.XGBoostError
      */
-    public Model train(TrainingSet ts, double C) {
-        List<Integer> ids = new ArrayList<>(ts.getDict().values());
-        Collections.sort(ids);
-        Problem problem = new Problem();
-        problem.l = ts.getSet().size();
-        problem.n = ts.getDict().size() + ts.denseSize();
-        Feature[][] x = new Feature[problem.l][];
-        double[] y = new double[problem.l];
-        for (int k = 0; k < ts.getSet().size(); k++) {
-            Instance inst = ts.getSet().get(k);
-            x[k] = new Feature[inst.getFeatures().size() + ts.denseSize()];
-            int j = 0;
-            for (Integer id : ids) {
-                float v = inst.getFeature(id);
-                if (v != 0) {
-                    x[k][j] = new FeatureNode(id, v);
-                    j++;
-                }
+    public Booster train(TrainingSet ts, Map<String, Object> params, int round) throws XGBoostError {
+        Pair<Utils.CSRSparseData, Integer> p = Utils.getSparseData(ts);
+        DMatrix matrix = new DMatrix(p.getA().rowHeaders, p.getA().colIndex, p.getA().data,
+                DMatrix.SparseType.CSR, p.getB());
+        matrix.setLabel(p.getA().labels);
+        Map<String, DMatrix> watches = new HashMap<String, DMatrix>() {
+            {
+                put("train", matrix);
             }
-            j = inst.getFeatures().size();
-            int did = ids.size() + 1;
-            for (Vector v : inst.getDenseFeature()) {
-                for (float c : ((RealVector) v).getCoordinates()) {
-                    x[k][j] = new FeatureNode(did, c);
-                    j++;
-                    did++;
-                }
-            }
-            y[k] = inst.getLabel();
-        }
-        problem.x = x;
-        problem.y = y;
-        double eps = 0.1;
-        Parameter parameter = new Parameter(solver, C, eps);
-        Model model = Linear.train(problem, parameter);
-        return model;
+        };
+        return XGBoost.train(matrix, params, round, watches, null, null);
     }
 
     /**
      *
-     * @param ts
+     * @param trainFile
+     * @param vr
      * @param k
-     * @param C
+     * @throws ml.dmlc.xgboost4j.java.XGBoostError
      */
-
-    public void kfold(TrainingSet ts, int k, double C) throws IOException {
-        List<Integer> ids = new ArrayList<>(ts.getDict().values());
-        Collections.sort(ids);
-        Problem problem = new Problem();
-        problem.l = ts.getSet().size();
-        problem.n = ts.getDict().size();
-        Feature[][] x = new Feature[problem.l][];
-        double[] y = new double[problem.l];
-        for (int l = 0; l < ts.getSet().size(); l++) {
-            Instance inst = ts.getSet().get(l);
-            x[l] = new Feature[inst.getFeatures().size()];
-            int j = 0;
-            for (Integer id : ids) {
-                float v = inst.getFeature(id);
-                if (v != 0) {
-                    x[l][j] = new FeatureNode(id, v);
-                    j++;
+    public void kfold(File trainFile, int k, VectorReader vr) throws XGBoostError, IOException {
+        UDPParser parser = new UDPParser(Config.getInstance().getValue("udp.address"), Config.getInstance().getValue("udp.model"));
+        WikiExtractor ie = new WikiITSimpleDepExtractor();
+        TrainingSet tr = generateFeatures(trainFile, parser, ie, vr);
+        Pair<Utils.CSRSparseData, Integer> p = Utils.getSparseData(tr);
+        DMatrix matrix = new DMatrix(p.getA().rowHeaders, p.getA().colIndex, p.getA().data,
+                DMatrix.SparseType.CSR, p.getB());
+        matrix.setLabel(p.getA().labels);
+        Map<String, Object> params = new HashMap<>();
+        params.put("eta", 0.4);
+        params.put("max_depth", 12);
+        params.put("verbosity", 1);
+        params.put("seed", 42);
+        params.put("objective", "binary:logistic");
+        int round = 80;
+        int[] depth = new int[]{15, 18};
+        double[] etav = new double[]{0.1, 0.2, 0.3, 0.4};
+        int[] roundv = new int[]{20, 40, 80, 100};
+        for (int d : depth) {
+            params.put("max_depth", d);
+            for (double e : etav) {
+                params.put("eta", e);
+                for (int r : roundv) {
+                    round = r;
+                    String[] cv = XGBoost.crossValidation(matrix, params, round, k, new String[]{"auc"}, null, null);
+                    System.out.println(d + "\t" + e + "\t" + r + "\t" + cv[cv.length - 2] + "\t" + cv[cv.length - 1]);
                 }
             }
-            y[l] = inst.getLabel();
         }
-        problem.x = x;
-        problem.y = y;
-        double eps = 0.1;
-        Parameter parameter = new Parameter(solver, C, eps);
-        double[] p = new double[y.length];
-        Linear.crossValidation(problem, parameter, k, p);
-        List<Integer> labels = new ArrayList<>();
-        for (double v : y) {
-            labels.add((int) Math.round(v));
-        }
-        List<Integer> pred = new ArrayList<>();
-        for (double v : p) {
-            pred.add((int) Math.round(v));
-        }
-        computeMetrics(labels, pred, null);
     }
 
     /**
      *
-     * @param model
+     * @param booster
      * @param ts
      * @return
+     * @throws ml.dmlc.xgboost4j.java.XGBoostError
      */
-    public List<Pair<Integer, Integer>> testWithProb(Model model, TrainingSet ts) {
+    public List<Pair<Integer, Integer>> testWithProb(Booster booster, TrainingSet ts) throws XGBoostError {
         List<Pair<Integer, Integer>> r = new ArrayList<>();
-        List<Integer> ids = new ArrayList<>(ts.getDict().values());
-        Collections.sort(ids);
-        for (int k = 0; k < ts.getSet().size(); k++) {
-            Instance inst = ts.getSet().get(k);
-            Feature[] fx = new Feature[inst.getFeatures().size() + ts.denseSize()];
-            int j = 0;
-            for (Integer id : ids) {
-                float v = inst.getFeature(id);
-                if (v != 0) {
-                    fx[j] = new FeatureNode(id, v);
-                    j++;
+        Pair<Utils.CSRSparseData, Integer> p = Utils.getSparseData(ts);
+        DMatrix matrix = new DMatrix(p.getA().rowHeaders, p.getA().colIndex, p.getA().data,
+                DMatrix.SparseType.CSR, p.getB());
+        float[][] predict = booster.predict(matrix);
+        List<Instance> l = ts.getSet();
+        for (int k = 0; k < l.size(); k++) {
+            if (predict[k][0] >= 0.5) {
+                if (Utils.map(predict[k][0], 0.5, 1, 0, 1) >= thPred) {
+                    r.add(new Pair<>(l.get(k).getId(), 1));
                 }
-            }
-            j = inst.getFeatures().size();
-            int did = ids.size() + 1;
-            for (Vector v : inst.getDenseFeature()) {
-                for (float c : ((RealVector) v).getCoordinates()) {
-                    fx[j] = new FeatureNode(did, c);
-                    j++;
-                    did++;
-                }
-            }
-            double[] prob = new double[2];
-            double l = Linear.predictProbability(model, fx, prob);
-            //System.out.println(l + "\t" + Arrays.toString(prob));
-            if (prob[0] >= thPred || prob[1] >= thPred) {
-                r.add(new Pair<>(inst.getId(), (int) Math.round(l)));
-            }
-        }
-        return r;
-    }
-
-    /**
-     *
-     * @param model
-     * @param ts
-     * @return
-     */
-    public List<Integer> test(Model model, TrainingSet ts) {
-        List<Integer> r = new ArrayList<>();
-        List<Integer> ids = new ArrayList<>(ts.getDict().values());
-        Collections.sort(ids);
-        for (int k = 0; k < ts.getSet().size(); k++) {
-            Instance inst = ts.getSet().get(k);
-            if (inst.getFeatures().isEmpty()) {
-                r.add(null);
             } else {
-                Feature[] fx = new Feature[inst.getFeatures().size() + ts.denseSize()];
-                int j = 0;
-                for (Integer id : ids) {
-                    float v = inst.getFeature(id);
-                    if (v != 0) {
-                        fx[j] = new FeatureNode(id, v);
-                        j++;
-                    }
+                if (Utils.map(predict[k][0], 0, 0.5, 1, 0) >= thPred) {
+                    r.add(new Pair<>(l.get(k).getId(), 0));
                 }
-                j = inst.getFeatures().size();
-                int did = ids.size() + 1;
-                for (Vector v : inst.getDenseFeature()) {
-                    for (float c : ((RealVector) v).getCoordinates()) {
-                        fx[j] = new FeatureNode(did, c);
-                        j++;
-                        did++;
-                    }
-                }
-                double l = Linear.predict(model, fx);
-                r.add((int) Math.round(l));
             }
         }
         return r;
@@ -556,36 +459,41 @@ public class CoTraining {
 
     /**
      *
-     * @param model
+     * @param booster
      * @param ts
      * @return
+     * @throws ml.dmlc.xgboost4j.java.XGBoostError
      */
-    public List<Pair<Integer, Integer>> testWithoutProb(Model model, TrainingSet ts) {
+    public List<Integer> test(Booster booster, TrainingSet ts) throws XGBoostError {
+        Pair<Utils.CSRSparseData, Integer> p = Utils.getSparseData(ts);
+        DMatrix matrix = new DMatrix(p.getA().rowHeaders, p.getA().colIndex, p.getA().data,
+                DMatrix.SparseType.CSR, p.getB());
+        float[][] predict = booster.predict(matrix);
+        List<Instance> l = ts.getSet();
+        List<Integer> r = new ArrayList<>();
+        for (int k = 0; k < l.size(); k++) {
+            //System.out.println(Arrays.toString(predict[k]));
+            r.add(predict[k][0] < 0.5 ? 0 : 1);
+        }
+        return r;
+    }
+
+    /**
+     *
+     * @param booster
+     * @param ts
+     * @return
+     * @throws ml.dmlc.xgboost4j.java.XGBoostError
+     */
+    public List<Pair<Integer, Integer>> testWithoutProb(Booster booster, TrainingSet ts) throws XGBoostError {
         List<Pair<Integer, Integer>> r = new ArrayList<>();
-        List<Integer> ids = new ArrayList<>(ts.getDict().values());
-        Collections.sort(ids);
-        for (int k = 0; k < ts.getSet().size(); k++) {
-            Instance inst = ts.getSet().get(k);
-            Feature[] fx = new Feature[inst.getFeatures().size() + ts.denseSize()];
-            int j = 0;
-            for (Integer id : ids) {
-                float v = inst.getFeature(id);
-                if (v != 0) {
-                    fx[j] = new FeatureNode(id, v);
-                    j++;
-                }
-            }
-            j = inst.getFeatures().size();
-            int did = ids.size() + 1;
-            for (Vector v : inst.getDenseFeature()) {
-                for (float c : ((RealVector) v).getCoordinates()) {
-                    fx[j] = new FeatureNode(did, c);
-                    j++;
-                    did++;
-                }
-            }
-            double l = Linear.predict(model, fx);
-            r.add(new Pair(inst.getId(), (int) Math.round(l)));
+        Pair<Utils.CSRSparseData, Integer> p = Utils.getSparseData(ts);
+        DMatrix matrix = new DMatrix(p.getA().rowHeaders, p.getA().colIndex, p.getA().data,
+                DMatrix.SparseType.CSR, p.getB());
+        float[][] predict = booster.predict(matrix);
+        List<Instance> l = ts.getSet();
+        for (int k = 0; k < l.size(); k++) {
+            r.add(new Pair<>(l.get(k).getId(), predict[k][0] < 0.5 ? 0 : 1));
         }
         return r;
     }
@@ -640,10 +548,10 @@ public class CoTraining {
      * @param vr
      * @param p
      * @param maxit
-     * @param C
      * @throws IOException
+     * @throws ml.dmlc.xgboost4j.java.XGBoostError
      */
-    public void cotraining(File annotatedFile, File dataFile, String outputdir, VectorReader vr, int p, int maxit, double C) throws IOException {
+    public void cotraining(File annotatedFile, File dataFile, String outputdir, VectorReader vr, int p, int maxit, Map<String, Object> params, int round) throws IOException, XGBoostError {
         UDPParser parser = new UDPParser(Config.getInstance().getValue("udp.address"), Config.getInstance().getValue("udp.model"));
         WikiExtractor ie = new WikiITSimpleDepExtractor();
         List<FileInstance> unlabelled = loadUnlabelled(dataFile);
@@ -664,14 +572,14 @@ public class CoTraining {
             System.out.println("Balance=" + bal);
             LOG.info("Training...");
             // build model
-            Model model = train(ts, C);
+            Booster booster = train(ts, params, round);
             LOG.info("Testing...");
             // classify unlabeled data
             List<Pair<Integer, Integer>> r;
             if (thPred > 0) {
-                r = testWithProb(model, generateTestFeatures(ts.getDict(), subList, parser, ie, vr));
+                r = testWithProb(booster, generateTestFeatures(ts.getDict(), subList, parser, ie, vr));
             } else {
-                r = testWithoutProb(model, generateTestFeatures(ts.getDict(), subList, parser, ie, vr));
+                r = testWithoutProb(booster, generateTestFeatures(ts.getDict(), subList, parser, ie, vr));
             }
             balance(r, bal);
             LOG.log(Level.INFO, "New examples {0}", r.size());
@@ -715,11 +623,10 @@ public class CoTraining {
      * @param outputdir
      * @param p
      * @param maxit
-     * @param C
      * @throws IOException
      */
-    public void cotraining(File annotatedFile, File dataFile, String outputdir, int p, int maxit, double C) throws IOException {
-        cotraining(annotatedFile, dataFile, outputdir, null, p, maxit, C);
+    public void cotraining(File annotatedFile, File dataFile, String outputdir, int p, int maxit, Map<String, Object> params, int round) throws IOException, XGBoostError {
+        cotraining(annotatedFile, dataFile, outputdir, null, p, maxit, params, round);
     }
 
     /**
@@ -727,35 +634,28 @@ public class CoTraining {
      * @param trainFile
      * @param testFile
      * @param vr
-     * @param C
      * @throws IOException
      */
-    public void trainAndTest(File trainFile, File testFile, VectorReader vr, double C) throws IOException {
+    public void trainAndTest(File trainFile, File testFile, VectorReader vr, Map<String, Object> params, int round) throws IOException, XGBoostError {
         UDPParser parser = new UDPParser(Config.getInstance().getValue("udp.address"), Config.getInstance().getValue("udp.model"));
         WikiExtractor ie = new WikiITSimpleDepExtractor();
         TrainingSet tr = generateFeatures(trainFile, parser, ie, vr);
-        //kfold(tr, 5, C);
-        Model model = train(tr, C);
+        Booster booster = train(tr, params, round);
         List<FileInstance> unlabelled = loadUnlabelled(testFile);
         List<Integer> labels = loadLabels(testFile);
         TrainingSet ts = generateTestFeatures(tr.getDict(), unlabelled, parser, ie, vr);
-        List<Integer> pred = test(model, ts);
-        computeMetrics(labels, pred, trainFile.getParent());
+        List<Integer> pred = test(booster, ts);
+        computeMetrics(labels, pred, null);
     }
 
     /**
      *
      * @param trainFile
      * @param testFile
-     * @param C
      * @throws IOException
      */
-    public void trainAndTest(File trainFile, File testFile, double C) throws IOException {
-        trainAndTest(trainFile, testFile, null, C);
-    }
-
-    private double F(double P, double R) {
-        return (P + R) == 0 ? 0 : 2 * P * R / (P + R);
+    public void trainAndTest(File trainFile, File testFile, Map<String, Object> params, int round) throws IOException, XGBoostError {
+        trainAndTest(trainFile, testFile, null, params, round);
     }
 
     /**
@@ -763,7 +663,7 @@ public class CoTraining {
      * @param labels
      * @param predicted
      */
-    public void computeMetrics(List<Integer> labels, List<Integer> predicted, String metricsPath) throws IOException {
+    public void computeMetrics(List<Integer> labels, List<Integer> predicted, String metricsPath) {
         // remove no predicted instances
         int rn = 0;
         for (int i = predicted.size() - 1; i >= 0; i--) {
@@ -788,26 +688,14 @@ public class CoTraining {
         double r0 = (m[0][0] + m[0][1]) == 0 ? 0 : (double) m[0][0] / (double) (m[0][0] + m[0][1]);
         double p1 = (m[0][1] + m[1][1]) == 0 ? 0 : (double) m[1][1] / (double) (m[0][1] + m[1][1]);
         double r1 = (m[1][0] + m[1][1]) == 0 ? 0 : (double) m[1][1] / (double) (m[1][0] + m[1][1]);
-        double f0 = F(p0, r0);
-        double f1 = F(p1, r1);
-        double fm = (F(p0, r0) + F(p1, r1)) / 2;
-        double accuracy = ((double) (m[0][0] + m[1][1]) / (double) (m[0][0] + m[0][1] + m[1][0] + m[1][1]));
-        if (metricsPath != null) {
-            File metrics = new File(metricsPath + "/metrics_" + ct.getThPred() + ".tsv");
-            FileWriter writer = new FileWriter(metrics, true);
-            CSVPrinter printer = CSVFormat.TDF.print(writer);
-            printer.printRecord(p0, r0, p1, r1, f0, f1, fm, accuracy);
-            writer.close();
-        }
-
-        System.out.println(p0);
-        System.out.println(r0);
-        System.out.println(p1);
-        System.out.println(r1);
-        System.out.println(f0);
-        System.out.println(f1);
-        System.out.println(fm);
-        System.out.println(accuracy);
+        System.out.println("P_0\t" + p0);
+        System.out.println("R_0\t" + r0);
+        System.out.println("P_1\t" + p1);
+        System.out.println("R_1\t" + r1);
+        System.out.println("F_0\t" + F(p0, r0));
+        System.out.println("F_1\t" + F(p1, r1));
+        System.out.println("F_M\t" + (F(p0, r0) + F(p1, r1)) / 2);
+        System.out.println("acc.\t" + ((double) (m[0][0] + m[1][1]) / (double) (m[0][0] + m[0][1] + m[1][0] + m[1][1])));
     }
 
     /**
@@ -815,58 +703,42 @@ public class CoTraining {
      */
     public static void main(String[] args) {
         try {
-            ct = new CoTraining();
-            VectorReader vr = new LuceneVectorReader(new File("C:/Users/angel/Documents/OIE4PA/Vectors/cc.it.300.vec.index"));
+            XGboostCoTraining ct = new XGboostCoTraining();
+            VectorReader vr = new LuceneVectorReader(new File("/home/pierpaolo/data/fasttext/cc.it.300.vec.index"));
             vr.init();
             // set the learning algorithm
-            ct.setSolver(SolverType.L2R_L2LOSS_SVC);
-            // set the dimension of the n-gram
+            //ct.setSolver(SolverType.L2R_LR);
+            //ct.setSolver(SolverType.L2R_LR);
+            // set the threshold used during self-training
+            ct.setThPred(0.7);
+            //ct.setThPred(0.0);   // in case of SVC
             ct.setNgram(3);
-            ct.searchC(vr, new File("C:/Users/angel/Documents/OIE4PA/Dataset/L/training_10/training_set_10.tsv"), new File("C:/Users/angel/Documents/OIE4PA/Dataset/L/test/test_set.tsv"));
-            String outputPath = "C:/Users/angel/Documents/OIE4PA/Training/SVC/cross_validation/ablation/10/no_vect";
-            String trainingPath = "C:/Users/angel/Documents/OIE4PA/Dataset/L/training_10/training_set_10.tsv";
-            ct.searchTh(vr, 1, outputPath, trainingPath, null);
-        } catch (IOException ex) {
-            Logger.getLogger(CoTraining.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    public void searchC(VectorReader vr, File training, File test) throws IOException {
-        ArrayList<Integer> valuesC = new ArrayList<>(Arrays.asList(1, 2, 4, 6, 8, 10, 16, 20, 25));
-        for(Integer c: valuesC) {
-            System.out.println("[C] " + c);
-            ct.trainAndTest(training, test, vr, c);
-            System.out.println("----------------------------------------------------------------------------------------");
-        }
-    }
-
-    public void searchTh(VectorReader vr, int C, String outputPath, String trainingPath, Double threshold) throws IOException {
-        ArrayList<Double> valuesTh;
-        if(threshold!=null) {
-            valuesTh = new ArrayList<>(List.of(threshold));
-        } else {
-            if (ct.getSolver().isLogisticRegressionSolver()) {
-                valuesTh = new ArrayList<>(Arrays.asList(0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.0));
-            } else {
-                valuesTh = new ArrayList<>(List.of(0.0));
-            }
-        }
-        for(Double th: valuesTh) {
-            System.out.println("[THRESHOLD] " + th);
-            ct.setThPred(th);
-            File outputDir = new File(outputPath + "/" + th);
-            outputDir.mkdirs();
+            Map<String, Object> params = new HashMap<>();
+            params.put("eta", 0.4);
+            params.put("max_depth", 12);
+            params.put("verbosity", 1);
+            params.put("seed", 42);
+            params.put("objective", "binary:logistic");
+            int round = 80;
             // start co-training. Paramters: annotated data, unlabelled data, unlabelled data added to each iteration, max iterations, C
-            ct.cotraining(new File(trainingPath), new File("C:/Users/angel/Documents/OIE4PA/Dataset/U/u_triples_dd.tsv"),
-                    outputDir.getAbsolutePath(), 200, 20, C);
+            /*ct.cotraining(new File("/home/pierpaolo/Scaricati/temp/siap/oie/OIE_new/training_set.tsv"),
+                    new File("/home/pierpaolo/Scaricati/temp/siap/oie/OIE_new/u_triples_dd.tsv"),
+                    "/home/pierpaolo/Scaricati/temp/siap/oie/OIE_new/cotr_08",
+                    200, 20);*/
             // evaluate the training set obtained by the self-training
-            ct.trainAndTest(new File(outputDir.getAbsolutePath() + "/tr_19.tsv"),
-                    new File("C:/Users/angel/Documents/OIE4PA/Dataset/L/test/test_set.tsv"), vr, C);
-            System.out.println("----------------------------------------------------------------------------------------");
+            //ct.trainAndTest(new File("resources/bootstrapping/new_reg/tr_19"), new File("resources/bootstrapping/bootstrapping_test.csv"), 10);
+            //ct.kfold(new File("/home/pierpaolo/Scaricati/temp/siap/oie/OIE_new/training_set.tsv"), 5, vr);
+            /*ct.trainAndTest(new File("/home/pierpaolo/Scaricati/temp/siap/oie/OIE_new/cotr_08/tr_19.tsv"),
+                    new File("/home/pierpaolo/Scaricati/temp/siap/oie/OIE_new/test_set.tsv"), vr);*/
+            ct.trainAndTest(new File("/home/pierpaolo/Scaricati/temp/siap/oie/OIE_new/el/training_set_16.tsv"),
+                    new File("/home/pierpaolo/Scaricati/temp/siap/oie/OIE_new/el/test_set.tsv"), vr, params, round);
+            //ct.trainAndTest(new File("C:/Users/angel/Documents/OIE4PA/Dataset/L/training/training_set.tsv"),
+            //new File("C:/Users/angel/Documents/OIE4PA/Dataset/L/test/test_set.tsv"),
+            //vr, 2);
+        } catch (IOException | XGBoostError ex) {
+            Logger.getLogger(XGboostCoTraining.class.getName()).log(Level.SEVERE, null, ex);
         }
-
     }
-
 
     /**
      *
@@ -884,28 +756,8 @@ public class CoTraining {
         this.thPred = thPred;
     }
 
-    /**
-     *
-     * @return
-     */
-    public SolverType getSolver() {
-        return solver;
-    }
-
-    /**
-     *
-     * @param solver
-     */
-    public void setSolver(SolverType solver) {
-        this.solver = solver;
-    }
-
-    /**
-     *
-     * @param n
-     */
     public void setNgram(int n) {
-        this.ngram = abs(n);
+        this.ngram = Math.abs(n);
     }
 
 }

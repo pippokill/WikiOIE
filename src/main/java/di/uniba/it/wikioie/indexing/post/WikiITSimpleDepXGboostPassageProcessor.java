@@ -34,11 +34,6 @@
  */
 package di.uniba.it.wikioie.indexing.post;
 
-import de.bwaldvogel.liblinear.Feature;
-import de.bwaldvogel.liblinear.FeatureNode;
-import de.bwaldvogel.liblinear.Linear;
-import de.bwaldvogel.liblinear.Model;
-import de.bwaldvogel.liblinear.SolverType;
 import di.uniba.it.wikioie.Utils;
 import di.uniba.it.wikioie.data.Config;
 import di.uniba.it.wikioie.data.Pair;
@@ -46,46 +41,49 @@ import di.uniba.it.wikioie.data.Passage;
 import di.uniba.it.wikioie.data.Token;
 import di.uniba.it.wikioie.data.Triple;
 import di.uniba.it.wikioie.process.WikiITSimpleDepExtractor;
-import di.uniba.it.wikioie.training.CoTraining;
+import di.uniba.it.wikioie.training.Instance;
 import di.uniba.it.wikioie.training.TrainingSet;
+import di.uniba.it.wikioie.training.XGboostCoTraining;
 import di.uniba.it.wikioie.udp.UDPParser;
 import di.uniba.it.wikioie.udp.UDPSentence;
 import di.uniba.it.wikioie.vectors.VectorReader;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import ml.dmlc.xgboost4j.java.Booster;
+import ml.dmlc.xgboost4j.java.DMatrix;
+import ml.dmlc.xgboost4j.java.XGBoostError;
 import org.jgrapht.Graph;
 
 /**
  *
  * @author pierpaolo
  */
-public class WikiITSimpleDepSupervisedPassageProcessor implements PassageProcessor {
+public class WikiITSimpleDepXGboostPassageProcessor implements PassageProcessor {
 
     private final WikiITSimpleDepExtractor wie;
 
     private final File trainingfile;
 
-    private Model model = null;
+    private final XGboostCoTraining tr = new XGboostCoTraining();
 
-    private final CoTraining tr = new CoTraining();
-
-    private static final Logger LOG = Logger.getLogger(WikiITSimpleDepSupervisedPassageProcessor.class.getName());
+    private static final Logger LOG = Logger.getLogger(WikiITSimpleDepXGboostPassageProcessor.class.getName());
 
     private TrainingSet ts;
 
     private final UDPParser parser;
 
-    private final String solvername;
-
     private final VectorReader vr;
 
-    private final double C;
+    private final Map<String, Object> params;
+
+    private final int round;
+
+    private Booster booster;
 
     /**
      *
@@ -94,12 +92,12 @@ public class WikiITSimpleDepSupervisedPassageProcessor implements PassageProcess
      * @param solvername
      * @param vr
      */
-    public WikiITSimpleDepSupervisedPassageProcessor(File trainingfile, Double C, String solvername, VectorReader vr) {
+    public WikiITSimpleDepXGboostPassageProcessor(File trainingfile, VectorReader vr, Map<String, Object> params, int round) {
         this.wie = new WikiITSimpleDepExtractor();
         this.trainingfile = trainingfile;
         this.parser = new UDPParser(Config.getInstance().getValue("udp.address"), Config.getInstance().getValue("udp.model"));
-        this.C = C;
-        this.solvername = solvername;
+        this.params = params;
+        this.round = round;
         this.vr = vr;
     }
 
@@ -109,8 +107,8 @@ public class WikiITSimpleDepSupervisedPassageProcessor implements PassageProcess
      * @param C
      * @param solvername
      */
-    public WikiITSimpleDepSupervisedPassageProcessor(File trainingfile, Double C, String solvername) {
-        this(trainingfile, C, solvername, null);
+    public WikiITSimpleDepXGboostPassageProcessor(File trainingfile, Map<String, Object> params, int round) {
+        this(trainingfile, null, params, round);
     }
 
     /**
@@ -121,19 +119,12 @@ public class WikiITSimpleDepSupervisedPassageProcessor implements PassageProcess
     @Override
     public Passage process(Passage passage) {
         try {
-            if (model == null) {
-                LOG.log(Level.INFO, "Load supervised model {0}", trainingfile);
-                if (solvername.equalsIgnoreCase("SVC")) {
-                    LOG.info("Solver: SVC.");
-                    tr.setSolver(SolverType.L2R_L2LOSS_SVC);
-                } else {
-                    LOG.info("Solver: L2R.");
-                    tr.setSolver(SolverType.L2R_LR);
-                }
+            if (booster == null) {
+                LOG.log(Level.INFO, "Load XGboost supervised model {0}", trainingfile);
                 vr.init();
                 ts = tr.generateFeatures(trainingfile, parser, wie, vr);
                 LOG.info("Training...");
-                model = tr.train(ts, C);
+                booster = tr.train(ts, params, round);
             }
             UDPSentence sentence = new UDPSentence(passage.getId(), passage.getText(), passage.getConll());
             List<Token> tokens = UDPParser.getTokens(sentence);
@@ -141,24 +132,37 @@ public class WikiITSimpleDepSupervisedPassageProcessor implements PassageProcess
             sentence.setTokens(tokens);
             sentence.setGraph(graph);
             List<Triple> triples = wie.extract(graph);
-            for (int i = triples.size() - 1; i >= 0; i--) {
-                Set<String> fset = tr.generateFeatureSet(new Pair<>(sentence, triples.get(i)));
-                Map<String, Integer> dict = ts.getDict();
-                List<Feature> lf = new ArrayList<>();
+            TrainingSet testSet = new TrainingSet(ts.getDict());
+            int id = 0;
+            for (Triple triple : triples) {
+                Set<String> fset = tr.generateFeatureSet(new Pair<>(sentence, triple));
+                Instance inst = new Instance(id);
                 for (String v : fset) {
-                    Integer fid = dict.get(v);
+                    Integer fid = ts.getId(v);
                     if (fid != null) {
-                        lf.add(new FeatureNode(fid, 1));
+                        inst.setFeature(fid, 1);
                     }
                 }
-                int sid = dict.get("subj_score");
-                lf.add(new FeatureNode(sid, triples.get(i).getSubject().getScore()));
-                sid = dict.get("obj_score");
-                lf.add(new FeatureNode(sid, triples.get(i).getObject().getScore()));
-                sid = dict.get("t_score");
-                lf.add(new FeatureNode(sid, triples.get(i).getScore()));
-                double l = Linear.predict(model, lf.toArray(new Feature[lf.size()]));
-                if (l == 0) {
+                int sid = ts.getId("subj_score");
+                inst.setFeature(sid, triple.getSubject().getScore());
+                sid = ts.getId("obj_score");
+                inst.setFeature(sid, triple.getObject().getScore());
+                sid = ts.getId("t_score");
+                inst.setFeature(sid, triple.getScore());
+                if (vr != null) {
+                    inst.addDenseVector(Utils.getVectorFeature(sentence, triple.getSubject(), vr));
+                    inst.addDenseVector(Utils.getVectorFeature(sentence, triple.getPredicate(), vr));
+                    inst.addDenseVector(Utils.getVectorFeature(sentence, triple.getObject(), vr));
+                }
+                testSet.addInstance(inst);
+                id++;
+            }
+            Pair<Utils.CSRSparseData, Integer> p = Utils.getSparseData(ts);
+            DMatrix matrix = new DMatrix(p.getA().rowHeaders, p.getA().colIndex, p.getA().data,
+                    DMatrix.SparseType.CSR, p.getB());
+            float[][] predict = booster.predict(matrix);
+            for (int i = triples.size() - 1; i >= 0; i--) {
+                if (predict[i][0] < 0.5) {
                     triples.remove(i);
                 }
             }
@@ -170,7 +174,7 @@ public class WikiITSimpleDepSupervisedPassageProcessor implements PassageProcess
             Passage r = new Passage(passage.getId(), passage.getTitle(), passage.getText(), passage.getConll(),
                     triples.toArray(new Triple[triples.size()]));
             return r;
-        } catch (IOException ioex) {
+        } catch (IOException | XGBoostError ioex) {
             LOG.log(Level.SEVERE, "Error to classify passage", ioex);
             return passage;
         }

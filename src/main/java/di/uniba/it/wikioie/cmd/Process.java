@@ -34,6 +34,7 @@
  */
 package di.uniba.it.wikioie.cmd;
 
+import di.uniba.it.wikioie.Utils;
 import di.uniba.it.wikioie.indexing.WikiOIEIndex;
 import di.uniba.it.wikioie.indexing.post.PassageProcessor;
 import java.io.File;
@@ -44,6 +45,8 @@ import java.util.logging.Logger;
 
 import di.uniba.it.wikioie.vectors.VectorReader;
 import di.uniba.it.wikioie.vectors.lucene.LuceneVectorReader;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -69,8 +72,9 @@ public class Process {
                 .addOption(new Option("o", true, "Output directory"))
                 .addOption(new Option("p", true, "Processing class"))
                 .addOption(new Option("t", true, "Training file (optional)"))
-                .addOption(new Option("c", true, "C value (optional, default=1)"))
-                .addOption(new Option("s", true, "Solver (optional, L2R for logistic regression, SVC for support-vector classifier, default=L2R)"))
+                .addOption(new Option("ts", true, "Supervised algorithm (SVC or XGboost, default SVC"))
+                // for SVC solver=L2R;C=1 or solver=SVC;C=1
+                .addOption(new Option("tp", true, "Supervised parameter (format key1=value1;key2=value2;...;keyN=valueN"))
                 .addOption(new Option("v", true, "Vector embedding (optional, default=null)"));
         try {
             DefaultParser parser = new DefaultParser();
@@ -80,10 +84,30 @@ public class Process {
                 PassageProcessor processor = null;
                 try {
                     if (cmd.hasOption("t")) {
-                        processor = (PassageProcessor) ClassLoader.getSystemClassLoader().loadClass("di.uniba.it.wikioie.indexing.post." + cmd.getOptionValue("p"))
-                                .getDeclaredConstructor(File.class, Double.class, String.class, VectorReader.class).newInstance(new File(cmd.getOptionValue("t")),
-                                        Double.parseDouble(cmd.getOptionValue("c", "1")), cmd.getOptionValue("s", "L2R"),
+                        if (cmd.hasOption("ts")) {
+                            if (cmd.getOptionValue("ts").equalsIgnoreCase("SVC")) {
+                                Map<String, String> params = Utils.getOptionParams(cmd.getOptionValue("tp", "solver=L2R;C=1"));
+                                processor = (PassageProcessor) ClassLoader.getSystemClassLoader().loadClass("di.uniba.it.wikioie.indexing.post." + cmd.getOptionValue("p"))
+                                        .getDeclaredConstructor(File.class, Double.class, String.class, VectorReader.class).newInstance(new File(cmd.getOptionValue("t")),
+                                        Double.parseDouble(params.get("C")), params.get("solver"),
                                         new LuceneVectorReader(new File(cmd.getOptionValue("v", null))));
+                            } else if (cmd.getOptionValue("ts").equalsIgnoreCase("XGboost")) {
+                                Map<String, String> params = Utils.getOptionParams(cmd.getOptionValue("tp", "eta=0.4;max_depth=12;verbosity=1;seed=42;objective=binary:logistic"));
+                                Map<String, Object> pm = new HashMap<>();
+                                pm.put("eta", Integer.parseInt(params.get("eta")));
+                                pm.put("max_depth", Integer.parseInt(params.get("max_depth")));
+                                pm.put("verbosity", Integer.parseInt(params.get("verbosity")));
+                                pm.put("seed", Integer.parseInt(params.get("seed")));
+                                pm.put("objective", params.get("objective"));
+                                processor = (PassageProcessor) ClassLoader.getSystemClassLoader().loadClass("di.uniba.it.wikioie.indexing.post." + cmd.getOptionValue("p"))
+                                        .getDeclaredConstructor(File.class, VectorReader.class, Map.class, Integer.TYPE).newInstance(new File(cmd.getOptionValue("t")),
+                                        new LuceneVectorReader(new File(cmd.getOptionValue("v", null))), pm, Integer.parseInt(params.get("round")));
+                            } else {
+                                throw new IllegalArgumentException("Supervised algorithm " + cmd.getOptionValue("ts") + " is not supported.");
+                            }
+                        } else {
+                            throw new IllegalArgumentException("Supervised algorithm is missing");
+                        }
                     } else {
                         processor = (PassageProcessor) ClassLoader.getSystemClassLoader().loadClass("di.uniba.it.wikioie.indexing.post." + cmd.getOptionValue("p")).getDeclaredConstructor().newInstance();
                     }
@@ -103,5 +127,5 @@ public class Process {
             formatter.printHelp("WikiOIE Run indexing", options);
         }
     }
-    
+
 }

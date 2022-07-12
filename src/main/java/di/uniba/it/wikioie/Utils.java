@@ -379,6 +379,20 @@ public class Utils {
         return (v - b1) * (e2 - b2) / (e1 - b1) + b2;
     }
 
+    public static Map<String, String> getOptionParams(String value) throws IllegalArgumentException {
+        Map<String, String> params = new HashMap<>();
+        String[] split = value.split(";");
+        for (String ss : split) {
+            String[] s = ss.split("=");
+            if (s.length == 2) {
+                params.put(s[0], s[1]);
+            } else {
+                throw new IllegalArgumentException("Not valid param: " + ss);
+            }
+        }
+        return params;
+    }
+
     public static void main(String[] args) {
         System.out.println(map(0.3, 0, 0.5, 1, 0));
     }
