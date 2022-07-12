@@ -59,7 +59,7 @@ import org.apache.lucene.queryparser.classic.ParseException;
 @Path("search")
 public class SearchService {
     
-    private static final int RS_SIZE=100;
+    private static final int RS_SIZE=250;
 
     /**
      *

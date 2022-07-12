@@ -48,6 +48,7 @@ public class CoTrainingXGboost {
         params.put("eta", 0.4);
         params.put("max_depth", 12);
         params.put("verbosity", 1);
+        params.put("seed", 42);
         params.put("objective", "binary:logistic");
     }
 
@@ -714,19 +715,21 @@ public class CoTrainingXGboost {
             //ct.setSolver(SolverType.L2R_LR);
             //ct.setSolver(SolverType.L2R_LR);
             // set the threshold used during self-training
-            ct.setThPred(0.8);
+            ct.setThPred(0.7);
             //ct.setThPred(0.0);   // in case of SVC
             ct.setNgram(3);
             // start co-training. Paramters: annotated data, unlabelled data, unlabelled data added to each iteration, max iterations, C
-            ct.cotraining(new File("/home/pierpaolo/Scaricati/temp/siap/oie/OIE_new/training_set.tsv"),
+            /*ct.cotraining(new File("/home/pierpaolo/Scaricati/temp/siap/oie/OIE_new/training_set.tsv"),
                     new File("/home/pierpaolo/Scaricati/temp/siap/oie/OIE_new/u_triples_dd.tsv"),
                     "/home/pierpaolo/Scaricati/temp/siap/oie/OIE_new/cotr_08",
-                    200, 20);
+                    200, 20);*/
             // evaluate the training set obtained by the self-training
             //ct.trainAndTest(new File("resources/bootstrapping/new_reg/tr_19"), new File("resources/bootstrapping/bootstrapping_test.csv"), 10);
             //ct.kfold(new File("/home/pierpaolo/Scaricati/temp/siap/oie/OIE_new/training_set.tsv"), 5, vr);
-            ct.trainAndTest(new File("/home/pierpaolo/Scaricati/temp/siap/oie/OIE_new/cotr_08/tr_19.tsv"),
-                    new File("/home/pierpaolo/Scaricati/temp/siap/oie/OIE_new/test_set.tsv"), vr);
+            /*ct.trainAndTest(new File("/home/pierpaolo/Scaricati/temp/siap/oie/OIE_new/cotr_08/tr_19.tsv"),
+                    new File("/home/pierpaolo/Scaricati/temp/siap/oie/OIE_new/test_set.tsv"), vr);*/
+            ct.trainAndTest(new File("/home/pierpaolo/Scaricati/temp/siap/oie/OIE_new/el/training_set_16.tsv"),
+                    new File("/home/pierpaolo/Scaricati/temp/siap/oie/OIE_new/el/test_set.tsv"), vr);
             //ct.trainAndTest(new File("C:/Users/angel/Documents/OIE4PA/Dataset/L/training/training_set.tsv"),
             //new File("C:/Users/angel/Documents/OIE4PA/Dataset/L/test/test_set.tsv"),
             //vr, 2);
