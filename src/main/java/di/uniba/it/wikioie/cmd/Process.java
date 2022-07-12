@@ -92,9 +92,9 @@ public class Process {
                                         Double.parseDouble(params.get("C")), params.get("solver"),
                                         new LuceneVectorReader(new File(cmd.getOptionValue("v", null))));
                             } else if (cmd.getOptionValue("ts").equalsIgnoreCase("XGboost")) {
-                                Map<String, String> params = Utils.getOptionParams(cmd.getOptionValue("tp", "eta=0.4;max_depth=12;verbosity=1;seed=42;objective=binary:logistic"));
+                                Map<String, String> params = Utils.getOptionParams(cmd.getOptionValue("tp", "eta=0.4;max_depth=12;verbosity=1;seed=42;objective=binary:logistic;round=80"));
                                 Map<String, Object> pm = new HashMap<>();
-                                pm.put("eta", Integer.parseInt(params.get("eta")));
+                                pm.put("eta", Double.parseDouble(params.get("eta")));
                                 pm.put("max_depth", Integer.parseInt(params.get("max_depth")));
                                 pm.put("verbosity", Integer.parseInt(params.get("verbosity")));
                                 pm.put("seed", Integer.parseInt(params.get("seed")));
