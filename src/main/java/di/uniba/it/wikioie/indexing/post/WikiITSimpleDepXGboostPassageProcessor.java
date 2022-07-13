@@ -125,6 +125,7 @@ public class WikiITSimpleDepXGboostPassageProcessor implements PassageProcessor 
                 ts = tr.generateFeatures(trainingfile, parser, wie, vr);
                 LOG.info("Training...");
                 booster = tr.train(ts, params, round);
+                LOG.info("Training OK!");
             }
             UDPSentence sentence = new UDPSentence(passage.getId(), passage.getText(), passage.getConll());
             List<Token> tokens = UDPParser.getTokens(sentence);
@@ -157,7 +158,8 @@ public class WikiITSimpleDepXGboostPassageProcessor implements PassageProcessor 
                 testSet.addInstance(inst);
                 id++;
             }
-            Pair<Utils.CSRSparseData, Integer> p = Utils.getSparseData(ts);
+            LOG.log(Level.INFO, "Prediction [{0}]...", testSet.getSet().size());
+            Pair<Utils.CSRSparseData, Integer> p = Utils.getSparseData(testSet);
             DMatrix matrix = new DMatrix(p.getA().rowHeaders, p.getA().colIndex, p.getA().data,
                     DMatrix.SparseType.CSR, p.getB());
             float[][] predict = booster.predict(matrix);
