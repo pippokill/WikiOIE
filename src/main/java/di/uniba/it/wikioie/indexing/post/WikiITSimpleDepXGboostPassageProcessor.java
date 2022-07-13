@@ -133,44 +133,46 @@ public class WikiITSimpleDepXGboostPassageProcessor implements PassageProcessor 
             sentence.setTokens(tokens);
             sentence.setGraph(graph);
             List<Triple> triples = wie.extract(graph);
-            TrainingSet testSet = new TrainingSet(ts.getDict());
-            int id = 0;
-            for (Triple triple : triples) {
-                Set<String> fset = tr.generateFeatureSet(new Pair<>(sentence, triple));
-                Instance inst = new Instance(id);
-                for (String v : fset) {
-                    Integer fid = ts.getId(v);
-                    if (fid != null) {
-                        inst.setFeature(fid, 1);
+            if (!triples.isEmpty()) {
+                TrainingSet testSet = new TrainingSet(ts.getDict());
+                int id = 0;
+                for (Triple triple : triples) {
+                    Set<String> fset = tr.generateFeatureSet(new Pair<>(sentence, triple));
+                    Instance inst = new Instance(id);
+                    for (String v : fset) {
+                        Integer fid = ts.getId(v);
+                        if (fid != null) {
+                            inst.setFeature(fid, 1);
+                        }
+                    }
+                    int sid = ts.getId("subj_score");
+                    inst.setFeature(sid, triple.getSubject().getScore());
+                    sid = ts.getId("obj_score");
+                    inst.setFeature(sid, triple.getObject().getScore());
+                    sid = ts.getId("t_score");
+                    inst.setFeature(sid, triple.getScore());
+                    if (vr != null) {
+                        inst.addDenseVector(Utils.getVectorFeature(sentence, triple.getSubject(), vr));
+                        inst.addDenseVector(Utils.getVectorFeature(sentence, triple.getPredicate(), vr));
+                        inst.addDenseVector(Utils.getVectorFeature(sentence, triple.getObject(), vr));
+                    }
+                    testSet.addInstance(inst);
+                    id++;
+                }
+                LOG.log(Level.INFO, "Prediction [{0}]...", testSet.getSet().size());
+                Pair<Utils.CSRSparseData, Integer> p = Utils.getSparseData(testSet);
+                DMatrix matrix = new DMatrix(p.getA().rowHeaders, p.getA().colIndex, p.getA().data,
+                        DMatrix.SparseType.CSR, p.getB());
+                float[][] predict = booster.predict(matrix);
+                for (int i = triples.size() - 1; i >= 0; i--) {
+                    if (predict[i][0] < 0.5) {
+                        triples.remove(i);
                     }
                 }
-                int sid = ts.getId("subj_score");
-                inst.setFeature(sid, triple.getSubject().getScore());
-                sid = ts.getId("obj_score");
-                inst.setFeature(sid, triple.getObject().getScore());
-                sid = ts.getId("t_score");
-                inst.setFeature(sid, triple.getScore());
-                if (vr != null) {
-                    inst.addDenseVector(Utils.getVectorFeature(sentence, triple.getSubject(), vr));
-                    inst.addDenseVector(Utils.getVectorFeature(sentence, triple.getPredicate(), vr));
-                    inst.addDenseVector(Utils.getVectorFeature(sentence, triple.getObject(), vr));
+                // CHECK THIS!
+                for (Triple t : triples) {
+                    Utils.invertTriple(sentence, t);
                 }
-                testSet.addInstance(inst);
-                id++;
-            }
-            LOG.log(Level.INFO, "Prediction [{0}]...", testSet.getSet().size());
-            Pair<Utils.CSRSparseData, Integer> p = Utils.getSparseData(testSet);
-            DMatrix matrix = new DMatrix(p.getA().rowHeaders, p.getA().colIndex, p.getA().data,
-                    DMatrix.SparseType.CSR, p.getB());
-            float[][] predict = booster.predict(matrix);
-            for (int i = triples.size() - 1; i >= 0; i--) {
-                if (predict[i][0] < 0.5) {
-                    triples.remove(i);
-                }
-            }
-            // CHECK THIS!
-            for (Triple t : triples) {
-                Utils.invertTriple(sentence, t);
             }
             // ==============
             Passage r = new Passage(passage.getId(), passage.getTitle(), passage.getText(), passage.getConll(),

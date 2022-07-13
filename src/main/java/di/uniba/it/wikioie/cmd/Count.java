@@ -107,7 +107,7 @@ public class Count {
                                 addValue(map[2], triple.getObject().getSpan().toLowerCase());
                             }
                         } catch (Exception ex) {
-                            LOG.log(Level.INFO, "Error to process line", ex);
+                            LOG.log(Level.INFO, "Error to process line: " + line.substring(Math.min(line.length(), 128)), ex);
                         }
                     }
                     reader.close();

@@ -249,7 +249,7 @@ public class WikiOIEIndex {
                         writer.append(gson.toJson(data, Passage.class));
                         writer.newLine();
                     } catch (Exception ex) {
-                        LOG.log(Level.INFO, "Error to process line", ex);
+                        LOG.log(Level.INFO, "Error to process line: " + line.substring(Math.min(line.length(), 128)), ex);
                     }
                 }
                 reader.close();
