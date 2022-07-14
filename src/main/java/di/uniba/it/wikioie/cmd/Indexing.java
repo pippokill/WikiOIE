@@ -109,7 +109,7 @@ public class Indexing {
                         } else {
                             throw new IllegalArgumentException("Supervised algorithm is missing");
                         }
-                    } else {
+                    } else if (cmd.hasOption("p")) {
                         processor = (PassageProcessor) ClassLoader.getSystemClassLoader().loadClass("di.uniba.it.wikioie.indexing.post." + cmd.getOptionValue("p")).getDeclaredConstructor().newInstance();
                     }
                 } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
