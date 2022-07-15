@@ -32,10 +32,10 @@
  * GNU GENERAL PUBLIC LICENSE - Version 3, 29 June 2007
  *
  */
-
 package di.uniba.it.wikioie.indexing.service;
 
 import com.google.gson.Gson;
+import di.uniba.it.wikioie.data.Config;
 import di.uniba.it.wikioie.indexing.SearchDoc;
 import di.uniba.it.wikioie.indexing.SearchTriple;
 import jakarta.ws.rs.DefaultValue;
@@ -58,8 +58,14 @@ import org.apache.lucene.queryparser.classic.ParseException;
  */
 @Path("search")
 public class SearchService {
-    
-    private static final int RS_SIZE=250;
+
+    private static final int RS_SIZE = 250;
+
+    private static String titlePrefix = "";
+
+    static {
+        titlePrefix = Config.getInstance().getValue("server.title.prefix");
+    }
 
     /**
      *
@@ -115,6 +121,9 @@ public class SearchService {
         SearchDoc doc;
         try {
             doc = IndexWrapper.getInstance().getIdx().getDocById(id);
+            if (titlePrefix.length() > 0) {
+                doc.setTitle(doc.getTitle().replace(titlePrefix, ""));
+            }
         } catch (IOException ex) {
             Logger.getLogger(SearchService.class.getName()).log(Level.SEVERE, null, ex);
             doc = new SearchDoc("-1");
@@ -137,6 +146,9 @@ public class SearchService {
         List<SearchDoc> rs;
         try {
             rs = IndexWrapper.getInstance().getIdx().getDocByDatasetId(dsId);
+            if (titlePrefix.length() > 0) {
+                rs.stream().forEach(e -> e.setTitle(e.getTitle().replace(titlePrefix, "")));
+            }
         } catch (IOException ex) {
             Logger.getLogger(SearchService.class.getName()).log(Level.SEVERE, null, ex);
             rs = new ArrayList<>();
@@ -158,6 +170,9 @@ public class SearchService {
         List<SearchDoc> rs;
         try {
             rs = IndexWrapper.getInstance().getIdx().searchDocByTitle(query, RS_SIZE);
+            if (titlePrefix.length() > 0) {
+                rs.stream().forEach(e -> e.setTitle(e.getTitle().replace(titlePrefix, "")));
+            }
         } catch (IOException | ParseException ex) {
             Logger.getLogger(SearchService.class.getName()).log(Level.SEVERE, null, ex);
             rs = new ArrayList<>();
