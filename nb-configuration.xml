@@ -22,10 +22,11 @@ Any value defined here will override the pom.xml file value but is only applicab
             <configuration id="indexing" profiles=""/>
             <configuration id="processing" profiles=""/>
             <configuration id="shuffling" profiles=""/>
+            <configuration id="split" profiles=""/>
             <configuration id="udpipe" profiles=""/>
             <configuration id="udpipe and processing" profiles=""/>
             <configuration id="vectors" profiles=""/>
-            <configuration id="split" profiles=""/>
+            <configuration id="rest server" profiles=""/>
         </configurations>
     </config-data>
 </project-shared-configuration>

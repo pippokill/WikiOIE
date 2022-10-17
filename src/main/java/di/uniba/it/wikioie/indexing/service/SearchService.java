@@ -43,9 +43,14 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.StreamingOutput;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -63,8 +68,11 @@ public class SearchService {
 
     private static String titlePrefix = "";
 
+    private static String filesPath = "";
+
     static {
         titlePrefix = Config.getInstance().getValue("server.title.prefix");
+        filesPath = Config.getInstance().getValue("files.dir");
     }
 
     /**
@@ -180,6 +188,32 @@ public class SearchService {
         Gson gson = new Gson();
         String jsonString = gson.toJson(rs);
         return Response.ok(jsonString, MediaType.APPLICATION_JSON).build();
+    }
+
+    @GET
+    @Path("/download")
+    public Response downloadFile(@QueryParam("id") String id) {
+        try {
+            File file = new File(filesPath + "/" + id);
+            StreamingOutput fileStream = (java.io.OutputStream output) -> {
+                try {
+                    java.nio.file.Path path = Paths.get(filesPath + "/" + id);
+                    byte[] data = Files.readAllBytes(path);
+                    output.write(data);
+                    output.flush();
+                } catch (IOException ex) {
+                    throw new WebApplicationException("File download IO error: " + ex.getMessage());
+                } catch (Exception ex) {
+                    throw new WebApplicationException("File download general error: " + ex.getMessage());
+                }
+            };
+            return Response
+                    .ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
+                    .header("content-disposition", "attachment; filename = " + file.getName())
+                    .build();
+        } catch (Exception ex) {
+            throw new WebApplicationException("File download general error: " + ex.getMessage());
+        }
     }
 
 }
