@@ -117,6 +117,22 @@ public class SearchService {
         return Response.ok(jsonString, MediaType.APPLICATION_JSON).build();
     }
 
+    @GET
+    @Path("/triplebyparentandtitle")
+    @Produces("application/json")
+    public Response tripleByParentAndTitle(@QueryParam("p") String parent, @QueryParam("t") String title) {
+        List<SearchTriple> triples;
+        try {
+            triples = IndexWrapper.getInstance().getIdx().searchTripleByParentAndTitle(parent, title, RS_SIZE);
+        } catch (IOException | ParseException ex) {
+            Logger.getLogger(SearchService.class.getName()).log(Level.SEVERE, null, ex);
+            triples = new ArrayList<>();
+        }
+        Gson gson = new Gson();
+        String jsonString = gson.toJson(triples);
+        return Response.ok(jsonString, MediaType.APPLICATION_JSON).build();
+    }
+
     /**
      *
      * @param id

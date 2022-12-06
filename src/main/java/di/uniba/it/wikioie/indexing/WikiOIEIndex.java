@@ -365,12 +365,26 @@ public class WikiOIEIndex {
     public List<SearchDoc> searchDocByTitle(String query, int n) throws ParseException, IOException {
         QueryParser qp = new QueryParser("title", new StandardAnalyzer(CharArraySet.EMPTY_SET));
         Query q = qp.parse(query);
-        TopDocs topdocs = tripleS.search(q, n);
+        TopDocs topdocs = docS.search(q, n);
         List<SearchDoc> rs = new ArrayList<>();
         for (ScoreDoc sd : topdocs.scoreDocs) {
             Document ld = docS.doc(sd.doc);
             SearchDoc doc = new SearchDoc(ld.get("id"), ld.get("ds_id"), ld.get("title"), ld.get("text"), sd.score);
             rs.add(doc);
+        }
+        return rs;
+    }
+
+    public List<SearchTriple> searchTripleByParentAndTitle(String parent, String title, int n) throws ParseException, IOException {
+        QueryParser qp = new QueryParser("title", new StandardAnalyzer(CharArraySet.EMPTY_SET));
+        Query q = qp.parse(parent);
+        TopDocs topdocs = docS.search(q, docS.getIndexReader().maxDoc());
+        List<SearchTriple> rs = new ArrayList<>();
+        for (ScoreDoc sd : topdocs.scoreDocs) {
+            Document ld = docS.doc(sd.doc);
+            if (ld.get("title").endsWith(parent + "\\" + title)) {
+                rs.addAll(getTriplesByDocid(ld.get("id")));
+            }
         }
         return rs;
     }
