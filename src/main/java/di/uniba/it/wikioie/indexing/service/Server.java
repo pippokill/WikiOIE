@@ -36,11 +36,11 @@
 package di.uniba.it.wikioie.indexing.service;
 
 import di.uniba.it.wikioie.data.Config;
-import jakarta.ws.rs.core.UriBuilder;
 import java.io.IOException;
 import java.net.URI;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.ws.rs.core.UriBuilder;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -57,7 +57,7 @@ public class Server {
     public static void main(String[] args) {
         URI baseUri = UriBuilder.fromUri(Config.getInstance().getValue("server.address"))
                 .port(Integer.parseInt(Config.getInstance().getValue("server.port"))).build();
-        ResourceConfig config = new ResourceConfig(SearchService.class);
+        final ResourceConfig config = new ResourceConfig(SearchService.class).register(ResponseCorsFilter.class);
         HttpServer server = GrizzlyHttpServerFactory.createHttpServer(baseUri, config);
         try {
             server.start();
