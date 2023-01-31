@@ -219,6 +219,14 @@ public class Utils {
         return SpaceUtils.superposeVectors(vr, set.toArray(String[]::new));
     }
 
+    public static Vector getTextVector(String[] t, VectorReader vr) throws IOException {
+        return SpaceUtils.superposeVectors(vr, t);
+    }
+
+    public static Vector getTextVector(List<String> t, VectorReader vr) throws IOException {
+        return SpaceUtils.superposeVectors(vr, t.toArray(String[]::new));
+    }
+
     /**
      *
      * @param sentence
