@@ -38,6 +38,7 @@ import com.google.gson.Gson;
 import di.uniba.it.wikioie.data.Config;
 import di.uniba.it.wikioie.indexing.SearchDoc;
 import di.uniba.it.wikioie.indexing.SearchTriple;
+import di.uniba.it.wikioie.indexing.SearchTripleSE;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -93,6 +94,47 @@ public class SearchService {
         }
         Gson gson = new Gson();
         String jsonString = gson.toJson(triples);
+        return Response.ok(jsonString, MediaType.APPLICATION_JSON).build();
+    }
+
+    @GET
+    @Path("/tripleForSearchEngine")
+    @Produces("application/json")
+    public Response tripleForSearchEngine(@QueryParam("q") String query) {
+        List<SearchTripleSE> rs = new ArrayList<>();
+        try {
+            List<SearchTriple> triples = IndexWrapper.getInstance().getIdx().searchTriple(query, RS_SIZE);
+            for (SearchTriple t : triples) {
+                SearchTripleSE tse = new SearchTripleSE(t.getId(), t.getDocid(), t.getSubject(), t.getPredicate(), t.getObject(), t.getScore());
+                SearchDoc doc = IndexWrapper.getInstance().getIdx().getDocById(tse.getDocid());
+                tse.setText(doc.getText());
+                tse.setTitle(doc.getTitle());
+                tse.setFullDocId(doc.getDatasetId());
+                rs.add(tse);
+            }
+        } catch (IOException | ParseException ex) {
+            Logger.getLogger(SearchService.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        Gson gson = new Gson();
+        String jsonString = gson.toJson(rs);
+        return Response.ok(jsonString, MediaType.APPLICATION_JSON).build();
+    }
+
+    @GET
+    @Path("/tripleForSearchEngineByFullDocId")
+    @Produces("application/json")
+    public Response tripleForSearchEngineByFullDocId(@QueryParam("id") String id) {
+        List<SearchTriple> rs = new ArrayList<>();
+        try {
+            List<SearchDoc> docs = IndexWrapper.getInstance().getIdx().getDocByDatasetId(id);
+            for (SearchDoc t : docs) {
+                rs.addAll(IndexWrapper.getInstance().getIdx().getTriplesByDocid(t.getId()));
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(SearchService.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        Gson gson = new Gson();
+        String jsonString = gson.toJson(rs);
         return Response.ok(jsonString, MediaType.APPLICATION_JSON).build();
     }
 

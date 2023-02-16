@@ -12,8 +12,8 @@
             <properties>
                 <exec.vmArgs></exec.vmArgs>
                 <exec.args>${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
-                <exec.appArgs>/home/pierpaolo/data/fasttext/cc.it.300.vec.index</exec.appArgs>
-                <exec.mainClass>di.uniba.it.wikioie.vectors.utils.TestVR</exec.mainClass>
+                <exec.appArgs>-i /home/pierpaolo/data/fasttext/cc.it.300.vec.gz -o /home/pierpaolo/data/fasttext/test_index</exec.appArgs>
+                <exec.mainClass>di.uniba.it.wikioie.vectors.utils.Word2VecIndexing</exec.mainClass>
                 <exec.executable>java</exec.executable>
             </properties>
         </action>
@@ -29,8 +29,8 @@
             <properties>
                 <exec.vmArgs>-agentlib:jdwp=transport=dt_socket,server=n,address=${jpda.address}</exec.vmArgs>
                 <exec.args>${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
-                <exec.appArgs>/home/pierpaolo/data/fasttext/cc.it.300.vec.index</exec.appArgs>
-                <exec.mainClass>di.uniba.it.wikioie.vectors.utils.TestVR</exec.mainClass>
+                <exec.appArgs>-i /home/pierpaolo/data/fasttext/cc.it.300.vec.gz -o /home/pierpaolo/data/fasttext/test_index</exec.appArgs>
+                <exec.mainClass>di.uniba.it.wikioie.vectors.utils.Word2VecIndexing</exec.mainClass>
                 <exec.executable>java</exec.executable>
                 <jpda.listen>true</jpda.listen>
             </properties>
@@ -47,9 +47,9 @@
             <properties>
                 <exec.vmArgs></exec.vmArgs>
                 <exec.args>${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
-                <exec.mainClass>di.uniba.it.wikioie.vectors.utils.TestVR</exec.mainClass>
+                <exec.mainClass>di.uniba.it.wikioie.vectors.utils.Word2VecIndexing</exec.mainClass>
                 <exec.executable>java</exec.executable>
-                <exec.appArgs>/home/pierpaolo/data/fasttext/cc.it.300.vec.index</exec.appArgs>
+                <exec.appArgs>-i /home/pierpaolo/data/fasttext/cc.it.300.vec.gz -o /home/pierpaolo/data/fasttext/test_index</exec.appArgs>
             </properties>
         </action>
     </actions>
