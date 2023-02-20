@@ -108,7 +108,11 @@ public class SearchService {
                 SearchTripleSE tse = new SearchTripleSE(t.getId(), t.getDocid(), t.getSubject(), t.getPredicate(), t.getObject(), t.getScore());
                 SearchDoc doc = IndexWrapper.getInstance().getIdx().getDocById(tse.getDocid());
                 tse.setText(doc.getText());
-                tse.setTitle(doc.getTitle());
+                if (titlePrefix.length() > 0) {
+                    tse.setTitle(doc.getTitle().replace(titlePrefix, ""));
+                } else {
+                    tse.setTitle(doc.getTitle());
+                }
                 tse.setFullDocId(doc.getDatasetId());
                 rs.add(tse);
             }
