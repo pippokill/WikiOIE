@@ -10,6 +10,7 @@ import di.uniba.it.wikioie.vectors.lucene.LuceneVectorReader;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import org.apache.lucene.queryparser.classic.ParseException;
 
 /**
@@ -27,19 +28,24 @@ public class Execute {
 
         String vector_dir = "/home/pierpaolo/data/fasttext/cc.it.300.vec.index";
         String triple_index_dir = "/home/pierpaolo/data/siap/oie/OIE_paper/extraction/LR_index/triple_idx";
-        double cosine_threshold = 0.95;
+        double cosine_threshold = 0.8;
 
         VectorReader vr = new LuceneVectorReader(new File(vector_dir));
         vr.init();
 
         IndexUtils index = new IndexUtils(triple_index_dir);
         index.open();
+        
+        Map<String, Integer> m = index.discoverSimilPred("rientra in", vr, 1000, cosine_threshold);
+        System.out.println(m);
 
-        Triple triple = index.getTriple(2);
-        System.out.println(triple);
-        List<Triple> discover = index.discover(2, vr, 1000, cosine_threshold);
-        for (Triple t : discover) {
-            System.out.println(t);
+        List<Triple> st = index.searchTriple("subj:metri", 5);
+        if (!st.isEmpty()) {
+            System.out.println(st.get(0));
+            List<Triple> discover = index.discover(st.get(0).getDocid(), vr, 1000, cosine_threshold);
+            for (Triple t : discover) {
+                System.out.println(t);
+            }
         }
         System.exit(0);
 

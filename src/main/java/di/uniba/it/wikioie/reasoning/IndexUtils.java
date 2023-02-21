@@ -5,13 +5,16 @@
  */
 package di.uniba.it.wikioie.reasoning;
 
+import di.uniba.it.wikioie.indexing.SearchTriple;
 import di.uniba.it.wikioie.vectors.VectorReader;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.Set;
@@ -19,6 +22,7 @@ import org.apache.lucene.analysis.CharArraySet;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
@@ -136,6 +140,42 @@ public class IndexUtils {
     }
 
     // PIERPAOLO
+    public Map<String, Integer> discoverSimilPred(String pred, VectorReader vr, int n, double cosine_threshold) throws IOException, ParseException {
+        List<Triple> predTriples = searchTriple("pred:" + pred, n);
+        Map<String, Integer> m = new HashMap<>();
+        for (Triple t : predTriples) {
+            if (t.getPred().equalsIgnoreCase(pred)) {
+                List<Integer> rSO = searchSimSubjObj(t.getSub(), t.getObj(), vr, n, cosine_threshold);
+                for (int docid : rSO) {
+                    String p = searcher.doc(docid).get("pred");
+                    Integer v = m.get(p);
+                    if (v == null) {
+                        m.put(p, 1);
+                    } else {
+                        m.put(p, v + 1);
+                    }
+                }
+            }
+        }
+        return m;
+    }
+
+    public List<Triple> searchTriple(String query, int n) throws IOException, ParseException {
+        MultiFieldQueryParser qp = new MultiFieldQueryParser(new String[]{"subj", "pred", "obj"}, new StandardAnalyzer(CharArraySet.EMPTY_SET));
+        Query q = qp.parse(query);
+        TopDocs topdocs = searcher.search(q, n);
+        List<Triple> rs = new ArrayList<>();
+        for (ScoreDoc sd : topdocs.scoreDocs) {
+            Document doc = searcher.doc(sd.doc);
+            Triple t = new Triple(doc.get("subj"), doc.get("pred"), doc.get("obj"));
+            t.setScore(sd.score);
+            t.setDocid(sd.doc);
+            rs.add(t);
+        }
+        //Collections.sort(rs, Collections.reverseOrder());
+        return rs;
+    }
+
     public List<Integer> searchSimSubj(String subj, VectorReader vr, int n, double cosine_threshold) throws ParseException, IOException {
         Query q = queryParser.parse("subj:(" + subj + ")");
         TopDocs topdocs = searcher.search(q, n);
@@ -234,7 +274,7 @@ public class IndexUtils {
                 Document doc2 = searcher.doc(id);
                 Triple t = new Triple(doc2.get("subj"), doc2.get("pred"), doc2.get("obj"));
                 if (!visitedTriples.contains(t)) {
-                    System.out.println("[DISCOVER] Compere with: " + t);
+                    System.out.println("[DISCOVER] Compare with: " + t);
                     double p2 = getCondProbObjSubj(doc2.get("subj"), doc2.get("obj"), doc2.get("pred"), vr, n, cosine_threshold);
                     t.setScore(p1 * p2);
                     q.offer(t);

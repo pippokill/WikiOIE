@@ -13,6 +13,7 @@ import java.util.Objects;
  */
 public class Triple implements Comparable<Triple> {
 
+    private int docid;
     private String subject = "";
     private String predicate = "";
     private String object = "";
@@ -97,6 +98,15 @@ public class Triple implements Comparable<Triple> {
         }
         return Objects.equals(this.object, other.object);
     }
+
+    public int getDocid() {
+        return docid;
+    }
+
+    public void setDocid(int docid) {
+        this.docid = docid;
+    }
+    
     
     
 

@@ -9,6 +9,10 @@ import di.uniba.it.wikioie.Utils;
 import di.uniba.it.wikioie.vectors.Vector;
 import di.uniba.it.wikioie.vectors.VectorReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import org.apache.lucene.analysis.CharArraySet;
+import org.apache.lucene.analysis.it.ItalianAnalyzer;
 
 /**
  *
@@ -16,19 +20,23 @@ import java.io.IOException;
  */
 public class CosineSim {
 
-    private static String[] parse(String line) {
-        String ln = line.toLowerCase().trim();
-        return ln.split("\\s+");
-    }
+    private static CharArraySet ss = ItalianAnalyzer.getDefaultStopSet();
 
-    private static Vector fromStringToVector(String string, VectorReader vr) throws IOException {
-        Vector vector = Utils.getTextVector(parse(string), vr);
-        return vector;
+    private static List<String> parse(String line) {
+        String ln = line.toLowerCase().trim();
+        List<String> l = new ArrayList<>();
+        String[] split = ln.split("\\s+");
+        for (String t : split) {
+            if (!ss.contains(t)) {
+                l.add(t);
+            }
+        }
+        return l;
     }
 
     public static double sim(String s1, String s2, VectorReader vr) throws IOException {
-        Vector v1 = CosineSim.fromStringToVector(s1, vr);
-        Vector v2 = CosineSim.fromStringToVector(s2, vr);
+        Vector v1 = Utils.getTextVector(parse(s1), vr);
+        Vector v2 = Utils.getTextVector(parse(s2), vr);
         return v1.measureOverlap(v2);
     }
 
