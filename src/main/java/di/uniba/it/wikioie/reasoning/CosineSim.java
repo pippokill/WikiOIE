@@ -20,9 +20,9 @@ import org.apache.lucene.analysis.it.ItalianAnalyzer;
  */
 public class CosineSim {
 
-    private static CharArraySet ss = ItalianAnalyzer.getDefaultStopSet();
+    private static final CharArraySet ss = ItalianAnalyzer.getDefaultStopSet();
 
-    private static List<String> parse(String line) {
+    public static List<String> parse(String line) {
         String ln = line.toLowerCase().trim();
         List<String> l = new ArrayList<>();
         String[] split = ln.split("\\s+");

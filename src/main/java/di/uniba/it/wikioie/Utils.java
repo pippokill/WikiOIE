@@ -457,12 +457,4 @@ public class Utils {
         return params;
     }
 
-    /**
-     *
-     * @param args
-     */
-    public static void main(String[] args) {
-        System.out.println(map(0.3, 0, 0.5, 1, 0));
-    }
-
 }
