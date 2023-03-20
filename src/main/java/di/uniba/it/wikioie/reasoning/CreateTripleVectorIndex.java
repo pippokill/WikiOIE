@@ -52,6 +52,7 @@ public class CreateTripleVectorIndex {
 
                 LuceneVectorStorage storage = new LuceneVectorStorage();
                 storage.open(new File(cmd.getOptionValue("o")));
+                storage.storeDimension(vr.getDimension());
 
                 FSDirectory fsdir = FSDirectory.open(new File(triple_index_dir).toPath());
                 IndexSearcher searcher = new IndexSearcher(DirectoryReader.open(fsdir));
