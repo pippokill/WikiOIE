@@ -172,4 +172,11 @@ public class Counter<I> implements Comparable<Counter<I>> {
         return Integer.compare(count, o.count);
     }
 
+    @Override
+    public String toString() {
+        return "Counter{" + "item=" + item + ", count=" + count + '}';
+    }
+    
+    
+
 }

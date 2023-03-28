@@ -12,7 +12,7 @@
             <properties>
                 <exec.vmArgs></exec.vmArgs>
                 <exec.args>${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
-                <exec.appArgs>-v /home/pierpaolo/data/fasttext/cc.it.300.vec.index -i /home/pierpaolo/data/siap/oie/OIE_paper/extraction/LR_index/triple_idx -o /home/pierpaolo/data/siap/oie/OIE_paper/extraction/LR_index/triple_vectors_idx</exec.appArgs>
+                <exec.appArgs>-v /home/pierpaolo/data/fasttext/cc.it.300.vec.index -i /home/pierpaolo/data/siap/oie/OIE_paper/extraction/LR_index/triple_idx -o /home/pierpaolo/data/siap/oie/OIE_paper/extraction/LR_index/triple_vectors.bin -tbin</exec.appArgs>
                 <exec.mainClass>di.uniba.it.wikioie.reasoning.CreateTripleVectorIndex</exec.mainClass>
                 <exec.executable>java</exec.executable>
             </properties>
@@ -29,7 +29,7 @@
             <properties>
                 <exec.vmArgs>-agentlib:jdwp=transport=dt_socket,server=n,address=${jpda.address}</exec.vmArgs>
                 <exec.args>${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
-                <exec.appArgs>-v /home/pierpaolo/data/fasttext/cc.it.300.vec.index -i /home/pierpaolo/data/siap/oie/OIE_paper/extraction/LR_index/triple_idx -o /home/pierpaolo/data/siap/oie/OIE_paper/extraction/LR_index/triple_vectors_idx</exec.appArgs>
+                <exec.appArgs>-v /home/pierpaolo/data/fasttext/cc.it.300.vec.index -i /home/pierpaolo/data/siap/oie/OIE_paper/extraction/LR_index/triple_idx -o /home/pierpaolo/data/siap/oie/OIE_paper/extraction/LR_index/triple_vectors.bin -tbin</exec.appArgs>
                 <exec.mainClass>di.uniba.it.wikioie.reasoning.CreateTripleVectorIndex</exec.mainClass>
                 <exec.executable>java</exec.executable>
                 <jpda.listen>true</jpda.listen>
@@ -49,7 +49,7 @@
                 <exec.args>${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
                 <exec.mainClass>di.uniba.it.wikioie.reasoning.CreateTripleVectorIndex</exec.mainClass>
                 <exec.executable>java</exec.executable>
-                <exec.appArgs>-v /home/pierpaolo/data/fasttext/cc.it.300.vec.index -i /home/pierpaolo/data/siap/oie/OIE_paper/extraction/LR_index/triple_idx -o /home/pierpaolo/data/siap/oie/OIE_paper/extraction/LR_index/triple_vectors_idx</exec.appArgs>
+                <exec.appArgs>-v /home/pierpaolo/data/fasttext/cc.it.300.vec.index -i /home/pierpaolo/data/siap/oie/OIE_paper/extraction/LR_index/triple_idx -o /home/pierpaolo/data/siap/oie/OIE_paper/extraction/LR_index/triple_vectors.bin -tbin</exec.appArgs>
             </properties>
         </action>
     </actions>

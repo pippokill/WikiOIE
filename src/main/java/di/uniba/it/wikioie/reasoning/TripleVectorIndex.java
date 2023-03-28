@@ -4,6 +4,8 @@
  */
 package di.uniba.it.wikioie.reasoning;
 
+import di.uniba.it.wikioie.vectors.FileVectorReader;
+import di.uniba.it.wikioie.vectors.MemoryVectorReader;
 import di.uniba.it.wikioie.vectors.ObjectVector;
 import di.uniba.it.wikioie.vectors.ReverseObjectVectorComparator;
 import di.uniba.it.wikioie.vectors.Vector;
@@ -26,9 +28,15 @@ public class TripleVectorIndex {
 
     private VectorReader vectorReader;
 
+    private double simTh = 0.7;
+
     public enum RES_TYPE {
         PRED, SUBJ, OBJ
     };
+
+    public enum STORE_TYPE {
+        LUCENE, MEM, FILE
+    }
 
     public class TripleVectorResult implements Comparable<TripleVectorResult> {
 
@@ -109,13 +117,30 @@ public class TripleVectorIndex {
 
     }
 
-    public void open(File indexdir) throws IOException {
+    public void open(File file, STORE_TYPE type) throws IOException {
         if (vectorReader != null) {
             vectorReader.close();
             vectorReader = null;
         }
-        vectorReader = new LuceneVectorReader(indexdir);
-        vectorReader.init();
+        if (null == type) {
+            vectorReader = new FileVectorReader(file);
+            vectorReader.init();
+        } else {
+            switch (type) {
+                case LUCENE:
+                    vectorReader = new LuceneVectorReader(file);
+                    vectorReader.init();
+                    break;
+                case MEM:
+                    vectorReader = new MemoryVectorReader(file);
+                    vectorReader.init();
+                    break;
+                default:
+                    vectorReader = new FileVectorReader(file);
+                    vectorReader.init();
+                    break;
+            }
+        }
     }
 
     public List<TripleVectorResult> findSimilarPredicate(Vector predicate) throws IOException {
@@ -126,20 +151,20 @@ public class TripleVectorIndex {
         return findSimilar(predicate, "_pred", topn);
     }
 
-    public List<TripleVectorResult> findSimilarSubject(Vector predicate) throws IOException {
-        return findSimilarPredicate(predicate, Integer.MAX_VALUE);
+    public List<TripleVectorResult> findSimilarSubject(Vector subject) throws IOException {
+        return findSimilarSubject(subject, Integer.MAX_VALUE);
     }
 
-    public List<TripleVectorResult> findSimilarSubject(Vector predicate, int topn) throws IOException {
-        return findSimilar(predicate, "_subj", topn);
+    public List<TripleVectorResult> findSimilarSubject(Vector subject, int topn) throws IOException {
+        return findSimilar(subject, "_subj", topn);
     }
 
-    public List<TripleVectorResult> findSimilarObject(Vector predicate) throws IOException {
-        return findSimilarPredicate(predicate, Integer.MAX_VALUE);
+    public List<TripleVectorResult> findSimilarObject(Vector object) throws IOException {
+        return findSimilarObject(object, Integer.MAX_VALUE);
     }
 
-    public List<TripleVectorResult> findSimilarObject(Vector predicate, int topn) throws IOException {
-        return findSimilar(predicate, "_obj", topn);
+    public List<TripleVectorResult> findSimilarObject(Vector object, int topn) throws IOException {
+        return findSimilar(object, "_obj", topn);
     }
 
     private List<TripleVectorResult> findSimilar(Vector q, String suf, int topn) throws IOException {
@@ -149,12 +174,14 @@ public class TripleVectorIndex {
             ObjectVector ov = allVectors.next();
             if (ov.getKey().endsWith(suf) && !ov.getVector().isZeroVector()) {
                 double overlap = ov.getVector().measureOverlap(q);
-                ov.setScore(overlap);
-                if (queue.size() <= topn) {
-                    queue.offer(ov);
-                } else {
-                    queue.poll();
-                    queue.offer(ov);
+                if (overlap >= simTh) {
+                    ov.setScore(overlap);
+                    if (queue.size() <= topn) {
+                        queue.offer(ov);
+                    } else {
+                        queue.poll();
+                        queue.offer(ov);
+                    }
                 }
             }
         }
@@ -179,6 +206,14 @@ public class TripleVectorIndex {
             results.add(r);
         }
         return results;
+    }
+
+    public double getSimTh() {
+        return simTh;
+    }
+
+    public void setSimTh(double simTh) {
+        this.simTh = simTh;
     }
 
 }
