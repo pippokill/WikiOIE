@@ -52,7 +52,7 @@ public class TestTripleVectorSim {
             System.out.println(c.getItem() + "\t" + c.getCount());
         }
         System.out.println("Object...");
-        l = vectorSim.discoverSimilObj("impresa", vr, n, cosine_threshold);
+        l = vectorSim.discoverSimilObj("bando", vr, n, cosine_threshold);
         for (Counter c : l) {
             System.out.println(c.getItem() + "\t" + c.getCount());
         }

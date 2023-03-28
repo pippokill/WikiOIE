@@ -5,10 +5,12 @@
  */
 package di.uniba.it.wikioie.reasoning;
 
+import di.uniba.it.wikioie.data.Counter;
 import di.uniba.it.wikioie.vectors.VectorReader;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,64 +56,70 @@ public class TripleSim {
     }
 
     // PIERPAOLO
-    public Map<String, Integer> discoverSimilPred(String pred, VectorReader vr, int n, double cosine_threshold) throws IOException, ParseException {
+    public List<Counter> discoverSimilPred(String pred, VectorReader vr, int n, double cosine_threshold) throws IOException, ParseException {
         List<Triple> predTriples = searchTriple("pred:" + pred, n);
-        Map<String, Integer> m = new HashMap<>();
+        Map<String, Counter> m = new HashMap<>();
         for (Triple t : predTriples) {
             if (t.getPred().equalsIgnoreCase(pred)) {
                 List<Integer> rSO = searchSimSubjObj(t.getSub(), t.getObj(), vr, n, cosine_threshold);
                 for (int docid : rSO) {
-                    String p = searcher.doc(docid).get("pred");
-                    Integer v = m.get(p);
+                    String p = searcher.doc(docid).get("pred").toLowerCase();
+                    Counter<String> v = m.get(p);
                     if (v == null) {
-                        m.put(p, 1);
+                        m.put(p, new Counter<>(p, 1));
                     } else {
-                        m.put(p, v + 1);
+                        v.increment();
                     }
                 }
             }
         }
-        return m;
+        List<Counter> l = new ArrayList<>(m.values());
+        Collections.sort(l, Collections.reverseOrder());
+        return l;
     }
 
-    public Map<String, Integer> discoverSimilSubj(String subj, VectorReader vr, int n, double cosine_threshold) throws IOException, ParseException {
+    public List<Counter> discoverSimilSubj(String subj, VectorReader vr, int n, double cosine_threshold) throws IOException, ParseException {
         List<Triple> subjTriples = searchTriple("subj:" + subj, n);
-        Map<String, Integer> m = new HashMap<>();
+        Map<String, Counter> m = new HashMap<>();
         for (Triple t : subjTriples) {
             if (t.getSub().equalsIgnoreCase(subj)) {
                 List<Integer> rSO = searchSimPredObj(t.getPred(), t.getObj(), vr, n, cosine_threshold);
                 for (int docid : rSO) {
-                    String p = searcher.doc(docid).get("subj");
-                    Integer v = m.get(p);
+                    String p = searcher.doc(docid).get("pred").toLowerCase();
+                    Counter<String> v = m.get(p);
                     if (v == null) {
-                        m.put(p, 1);
+                        m.put(p, new Counter<>(p, 1));
                     } else {
-                        m.put(p, v + 1);
+                        v.increment();
                     }
                 }
             }
         }
-        return m;
+        List<Counter> l = new ArrayList<>(m.values());
+        Collections.sort(l, Collections.reverseOrder());
+        return l;
     }
 
-    public Map<String, Integer> discoverSimilObj(String obj, VectorReader vr, int n, double cosine_threshold) throws IOException, ParseException {
+    public List<Counter> discoverSimilObj(String obj, VectorReader vr, int n, double cosine_threshold) throws IOException, ParseException {
         List<Triple> objTriples = searchTriple("obj:" + obj, n);
-        Map<String, Integer> m = new HashMap<>();
+        Map<String, Counter> m = new HashMap<>();
         for (Triple t : objTriples) {
             if (t.getObj().equalsIgnoreCase(obj)) {
                 List<Integer> rSO = searchSimSubjPred(t.getSub(), t.getPred(), vr, n, cosine_threshold);
                 for (int docid : rSO) {
-                    String p = searcher.doc(docid).get("obj");
-                    Integer v = m.get(p);
+                    String p = searcher.doc(docid).get("pred").toLowerCase();
+                    Counter<String> v = m.get(p);
                     if (v == null) {
-                        m.put(p, 1);
+                        m.put(p, new Counter<>(p, 1));
                     } else {
-                        m.put(p, v + 1);
+                        v.increment();
                     }
                 }
             }
         }
-        return m;
+        List<Counter> l = new ArrayList<>(m.values());
+        Collections.sort(l, Collections.reverseOrder());
+        return l;
     }
 
     public List<Triple> searchTriple(String query, int n) throws IOException, ParseException {

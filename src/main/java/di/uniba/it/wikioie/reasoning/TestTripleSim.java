@@ -5,6 +5,7 @@
  */
 package di.uniba.it.wikioie.reasoning;
 
+import di.uniba.it.wikioie.data.Counter;
 import di.uniba.it.wikioie.vectors.VectorReader;
 import di.uniba.it.wikioie.vectors.lucene.LuceneVectorReader;
 import java.io.File;
@@ -29,7 +30,7 @@ public class TestTripleSim {
         String vector_dir = "/home/pierpaolo/data/fasttext/cc.it.300.vec.index";
         String triple_index_dir = "/home/pierpaolo/data/siap/oie/OIE_paper/extraction/LR_index/triple_idx";
         double cosine_threshold = 0.85;
-        int n=100;
+        int n = 100;
 
         VectorReader vr = new LuceneVectorReader(new File(vector_dir));
         vr.init();
@@ -37,14 +38,22 @@ public class TestTripleSim {
         TripleSim sim = new TripleSim(triple_index_dir);
         sim.open();
 
-        Map<String, Integer> m = sim.discoverSimilPred("rientra in", vr, n, cosine_threshold);
-        System.out.println(m);
-        
-        m = sim.discoverSimilSubj("bando", vr, n, cosine_threshold);
-        System.out.println(m);
-        
-        m = sim.discoverSimilObj("regione", vr, n, cosine_threshold);
-        System.out.println(m);
+        System.out.println("Searching...");
+        System.out.println("Predicate...");
+        List<Counter> l = sim.discoverSimilPred("rientra in", vr, n, cosine_threshold);
+        for (Counter c : l) {
+            System.out.println(c.getItem() + "\t" + c.getCount());
+        }
+        System.out.println("Subject...");
+        l = sim.discoverSimilSubj("bando", vr, n, cosine_threshold);
+        for (Counter c : l) {
+            System.out.println(c.getItem() + "\t" + c.getCount());
+        }
+        System.out.println("Object...");
+        l = sim.discoverSimilObj("bando", vr, n, cosine_threshold);
+        for (Counter c : l) {
+            System.out.println(c.getItem() + "\t" + c.getCount());
+        }
         vr.close();
     }
 
