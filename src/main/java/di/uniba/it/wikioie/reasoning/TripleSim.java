@@ -85,7 +85,7 @@ public class TripleSim {
             if (t.getSub().equalsIgnoreCase(subj)) {
                 List<Integer> rSO = searchSimPredObj(t.getPred(), t.getObj(), vr, n, cosine_threshold);
                 for (int docid : rSO) {
-                    String p = searcher.doc(docid).get("pred").toLowerCase();
+                    String p = searcher.doc(docid).get("subj").toLowerCase();
                     Counter<String> v = m.get(p);
                     if (v == null) {
                         m.put(p, new Counter<>(p, 1));
@@ -107,7 +107,7 @@ public class TripleSim {
             if (t.getObj().equalsIgnoreCase(obj)) {
                 List<Integer> rSO = searchSimSubjPred(t.getSub(), t.getPred(), vr, n, cosine_threshold);
                 for (int docid : rSO) {
-                    String p = searcher.doc(docid).get("pred").toLowerCase();
+                    String p = searcher.doc(docid).get("obj").toLowerCase();
                     Counter<String> v = m.get(p);
                     if (v == null) {
                         m.put(p, new Counter<>(p, 1));
