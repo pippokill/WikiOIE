@@ -194,6 +194,8 @@ public class TripleVectorSim {
     }
 
     public List<Integer> searchSimSubjPred(String subj, String pred, VectorReader vr, int n, double cosine_threshold) throws ParseException, IOException {
+        subj = QueryParser.escape(subj);
+        pred = QueryParser.escape(pred);
         Query q = queryParser.parse(pred + " subj:(" + subj + ")");
         TopDocs topdocs = searcher.search(q, n);
         List<Integer> rs = new ArrayList<>();
@@ -209,6 +211,8 @@ public class TripleVectorSim {
     }
 
     public List<Integer> searchSimPredObj(String pred, String obj, VectorReader vr, int n, double cosine_threshold) throws ParseException, IOException {
+        obj = QueryParser.escape(obj);
+        pred = QueryParser.escape(pred);
         Query q = queryParser.parse(pred + " obj:(" + obj + ")");
         TopDocs topdocs = searcher.search(q, n);
         List<Integer> rs = new ArrayList<>();
@@ -224,6 +228,8 @@ public class TripleVectorSim {
     }
 
     public List<Integer> searchSimSubjObj(String subj, String obj, VectorReader vr, int n, double cosine_threshold) throws ParseException, IOException {
+        subj = QueryParser.escape(subj);
+        obj = QueryParser.escape(obj);
         Query q = queryParser.parse("subj:(" + subj + ") obj:(" + obj + ")");
         TopDocs topdocs = searcher.search(q, n);
         List<Integer> rs = new ArrayList<>();
@@ -238,6 +244,9 @@ public class TripleVectorSim {
     }
 
     public List<Integer> searchSimSubjPredObj(String subj, String pred, String obj, VectorReader vr, int n, double cosine_threshold) throws ParseException, IOException {
+        subj = QueryParser.escape(subj);
+        pred = QueryParser.escape(pred);
+        obj = QueryParser.escape(obj);
         Query q = queryParser.parse(pred + " subj:(" + subj + ") obj:(" + obj + ")");
         TopDocs topdocs = searcher.search(q, n);
         List<Integer> rs = new ArrayList<>();
