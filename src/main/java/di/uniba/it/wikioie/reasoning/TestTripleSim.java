@@ -40,7 +40,7 @@ public class TestTripleSim {
 
         System.out.println("Searching...");
         System.out.println("Predicate...");
-        List<Counter> l = sim.discoverSimilPred("rientra in", vr, n, cosine_threshold);
+        List<Counter> l = sim.discoverSimilPred("procederà a", vr, n, cosine_threshold);
         for (Counter c : l) {
             System.out.println(c.getItem() + "\t" + c.getCount());
         }

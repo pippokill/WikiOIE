@@ -87,8 +87,8 @@ public class TripleVectorIndex {
         @Override
         public int hashCode() {
             int hash = 7;
-            hash = 23 * hash + this.docid;
-            hash = 23 * hash + Objects.hashCode(this.type);
+            hash = 79 * hash + this.docid;
+            hash = 79 * hash + Objects.hashCode(this.type);
             return hash;
         }
 

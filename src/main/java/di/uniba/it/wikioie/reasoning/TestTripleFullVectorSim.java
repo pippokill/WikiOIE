@@ -11,14 +11,13 @@ import di.uniba.it.wikioie.vectors.lucene.LuceneVectorReader;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import org.apache.lucene.queryparser.classic.ParseException;
 
 /**
  *
  * @author Alessia
  */
-public class TestTripleVectorSim {
+public class TestTripleFullVectorSim {
 
     /**
      * @param args the command line arguments
@@ -37,7 +36,7 @@ public class TestTripleVectorSim {
         VectorReader vr = new LuceneVectorReader(new File(vector_dir));
         vr.init();
 
-        TripleVectorSim vectorSim = new TripleVectorSim(triple_index_dir, triple_vector_bin, TripleVectorIndex.STORE_TYPE.MEM);
+        TripleFullVectorSim vectorSim = new TripleFullVectorSim(triple_index_dir, triple_vector_bin, TripleVectorIndex.STORE_TYPE.MEM);
         vectorSim.open();
 
         System.out.println("Searching...");
@@ -46,7 +45,7 @@ public class TestTripleVectorSim {
         for (Counter c : l) {
             System.out.println(c.getItem() + "\t" + c.getCount());
         }
-        System.out.println("Subject...");
+        /*System.out.println("Subject...");
         l = vectorSim.discoverSimilSubj("bando", vr, n, cosine_threshold);
         for (Counter c : l) {
             System.out.println(c.getItem() + "\t" + c.getCount());
@@ -55,7 +54,7 @@ public class TestTripleVectorSim {
         l = vectorSim.discoverSimilObj("bando", vr, n, cosine_threshold);
         for (Counter c : l) {
             System.out.println(c.getItem() + "\t" + c.getCount());
-        }
+        }*/
         vr.close();
 
     }
