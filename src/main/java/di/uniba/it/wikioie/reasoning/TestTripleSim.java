@@ -40,7 +40,7 @@ public class TestTripleSim {
 
         System.out.println("Searching...");
         System.out.println("Predicate...");
-        List<Counter> l = sim.discoverSimilPred("adotta come", vr, n, cosine_threshold);
+        /*List<Counter> l = sim.discoverSimilPred("adotta come", vr, n, cosine_threshold);
         for (Counter c : l) {
             System.out.println(c.getItem() + "\t" + c.getCount());
         }
@@ -48,12 +48,12 @@ public class TestTripleSim {
         l = sim.discoverSimilSubj("bando", vr, n, cosine_threshold);
         for (Counter c : l) {
             System.out.println(c.getItem() + "\t" + c.getCount());
-        }
+        }*/
         System.out.println("Object...");
-        l = sim.discoverSimilObj("bando", vr, n, cosine_threshold);
+        List<Counter> l = sim.discoverSimilObj("un progetto", vr, n, cosine_threshold);
         for (Counter c : l) {
             System.out.println(c.getItem() + "\t" + c.getCount());
-        }*/
+        }
         vr.close();
     }
 

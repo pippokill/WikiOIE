@@ -41,20 +41,20 @@ public class TestTripleFullVectorSim {
 
         System.out.println("Searching...");
         System.out.println("Predicate...");
-        List<Counter> l = vectorSim.discoverSimilPred("procederà a", vr, n, cosine_threshold);
+        /*List<Counter> l = vectorSim.discoverSimilPred("procederà a", vr, n, cosine_threshold);
         for (Counter c : l) {
             System.out.println(c.getItem() + "\t" + c.getCount());
         }
-        /*System.out.println("Subject...");
+        System.out.println("Subject...");
         l = vectorSim.discoverSimilSubj("bando", vr, n, cosine_threshold);
         for (Counter c : l) {
             System.out.println(c.getItem() + "\t" + c.getCount());
-        }
+        }*/
         System.out.println("Object...");
-        l = vectorSim.discoverSimilObj("bando", vr, n, cosine_threshold);
+        List<Counter> l = vectorSim.discoverSimilObj("un progetto", vr, n, cosine_threshold);
         for (Counter c : l) {
             System.out.println(c.getItem() + "\t" + c.getCount());
-        }*/
+        }
         vr.close();
 
     }
